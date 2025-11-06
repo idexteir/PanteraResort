@@ -13,61 +13,7 @@
 <link rel="icon" href="public/images/logo.png">
 <link rel="preload" href="public/fonts/pantera.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css">
-<script>
-  const copy = {
-    en: {
-      nav_home: "Home",
-      nav_fac: "Facilities",
-      nav_loc: "Location",
-      nav_contact: "Contact",
-      hero_h1: "Unwind in Style at Pantera Resort",
-      hero_p: "A serene Saudi escape—thoughtful spaces, warm service, and effortless comfort.",
-      cta_whatsapp: "Chat on WhatsApp",
-      cta_call: "Call Us",
-      card1_h: "Private Pools",
-      card1_p: "Relax in temperature-controlled privacy.",
-      card2_h: "Family Friendly",
-      card2_p: "Spacious villas and play areas.",
-      card3_h: "Easy Access",
-      card3_p: "Convenient location and parking.",
-      footer: "© " + new Date().getFullYear() + " Pantera Resort. All rights reserved."
-    },
-    ar: {
-      nav_home: "الرئيسية",
-      nav_fac: "المرافق",
-      nav_loc: "الموقع",
-      nav_contact: "التواصل",
-      hero_h1: "استرخِ بأناقة في منتجع بانتيرا",
-      hero_p: "ملاذ هادئ بخدمة دافئة ومساحات مريحة.",
-      cta_whatsapp: "واتساب",
-      cta_call: "اتصل بنا",
-      card1_h: "مسابح خاصة",
-      card1_p: "راحة وخصوصية بدرجة حرارة مناسبة.",
-      card2_h: "مناسب للعائلة",
-      card2_p: "فلل واسعة ومناطق لعب.",
-      card3_h: "سهولة الوصول",
-      card3_p: "موقع مميز ومواقف متاحة.",
-      footer: "© " + new Date().getFullYear() + " منتجع بانتيرا. جميع الحقوق محفوظة."
-    }
-  };
-  function setLang(lang){
-    const html=document.documentElement;
-    const isAR=lang==='ar';
-    html.lang=isAR?'ar':'en';
-    html.dir=isAR?'rtl':'ltr';
-    const t=copy[lang];
-    for(const[k,v] of Object.entries(t)){
-      const el=document.querySelector('[data-i18n="'+k+'"]');
-      if(el)el.textContent=v;
-    }
-    localStorage.setItem('lang',lang);
-  }
-  document.addEventListener('DOMContentLoaded',()=>{
-    setLang(localStorage.getItem('lang')||'en');
-    document.getElementById('lang-en').onclick=()=>setLang('en');
-    document.getElementById('lang-ar').onclick=()=>setLang('ar');
-  });
-</script>
+<script defer src="scripts/landing.js"></script>
 </head>
 <body>
   <div class="container">
@@ -82,7 +28,7 @@
         <a href="#location" data-i18n="nav_loc">Location</a>
         <a href="#contact" data-i18n="nav_contact">Contact</a>
         <div class="lang-switch">
-          <button id="lang-en">EN</button> | <button id="lang-ar">AR</button>
+          <button id="lang-en" type="button">EN</button> | <button id="lang-ar" type="button">AR</button>
         </div>
       </div>
     </nav>
