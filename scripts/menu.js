@@ -100,28 +100,28 @@ document.addEventListener('DOMContentLoaded', () => {
       return null;
     }
     try {
-      // Add timeout to prevent hanging
-      const queryPromise = supa
+      console.log("[Menu] Querying Supabase for menu items...");
+      const { data, error } = await supa
         .from('menu_items')
         .select('id,category,name_en,name_ar,desc_en,desc_ar,price,image,available,display_order')
         .order('category', { ascending: true })
         .order('display_order', { ascending: true })
         .order('name_en', { ascending: true });
       
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Supabase query timeout")), 3000)
-      );
-      
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
-      
       if (error) {
-        console.warn("[Menu] Supabase query error:", error);
+        console.error("[Menu] Supabase query error:", error);
         return null;
       }
-      console.log("[Menu] Loaded", data?.length || 0, "items from Supabase");
-      return data || [];
+      
+      if (!data || data.length === 0) {
+        console.warn("[Menu] Supabase returned no items");
+        return null;
+      }
+      
+      console.log("[Menu] Successfully loaded", data.length, "items from Supabase");
+      return data;
     } catch (e) {
-      console.warn("[Menu] Supabase load exception:", e.message || e);
+      console.error("[Menu] Supabase load exception:", e);
       return null;
     }
   }
@@ -151,25 +151,30 @@ document.addEventListener('DOMContentLoaded', () => {
     grid.innerHTML = "<p>Loading menu...</p>";
     
     try {
-      // Wait for Supabase (max 1 second), then try loading
-      const supa = await waitForSupabase(10);
-      if (supa) {
-        console.log("[Menu] Supabase ready, attempting to load...");
-        items = await loadFromSupabase(supa);
-      } else {
-        console.log("[Menu] Supabase not available, skipping...");
-      }
+      // Wait for Supabase (max 2 seconds)
+      console.log("[Menu] Waiting for Supabase...");
+      const supa = await waitForSupabase(20);
       
-      // Fallback to JSON if Supabase didn't work
-      if (!items || items.length === 0) {
-        console.log("[Menu] Falling back to JSON...");
-        items = await loadFallbackJSON();
-      }
-      
-      if (!items || items.length === 0) {
-        grid.innerHTML = "<p>No menu items available.</p>";
-        console.error("[Menu] No items loaded from any source");
+      if (!supa) {
+        console.error("[Menu] Supabase not available after waiting");
+        grid.innerHTML = "<p>Error: Supabase not configured. Please check scripts/supa.js</p>";
         return;
+      }
+      
+      console.log("[Menu] Supabase ready, loading menu items...");
+      items = await loadFromSupabase(supa);
+      
+      // Only fallback to JSON if Supabase completely fails
+      if (!items || items.length === 0) {
+        console.warn("[Menu] Supabase returned no items, falling back to JSON...");
+        items = await loadFallbackJSON();
+        
+        if (!items || items.length === 0) {
+          grid.innerHTML = "<p>No menu items available.</p>";
+          console.error("[Menu] No items loaded from any source");
+          return;
+        }
+        console.log("[Menu] Loaded", items.length, "items from JSON fallback");
       }
       
       console.log("[Menu] Successfully loaded", items.length, "items");
