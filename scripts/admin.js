@@ -4,13 +4,27 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   // Wait for Supabase to be ready
   function waitForSupabase(callback, maxAttempts = 50) {
+    // Check if Supabase CDN is loaded
+    if (typeof window.supabase === "undefined") {
+      if (maxAttempts <= 0) {
+        console.error("[Admin] Supabase CDN not loaded after waiting");
+        callback(null);
+        return;
+      }
+      setTimeout(() => waitForSupabase(callback, maxAttempts - 1), 100);
+      return;
+    }
+    
+    // Check if client is initialized
     const supa = window.getSupabase && window.getSupabase();
-    if (supa) {
+    if (supa && supa.auth) {
+      console.log("[Admin] Supabase client ready");
       callback(supa);
       return;
     }
+    
     if (maxAttempts <= 0) {
-      console.error("[Admin] Supabase not available after waiting");
+      console.error("[Admin] Supabase client not available after waiting");
       callback(null);
       return;
     }
@@ -18,6 +32,14 @@ document.addEventListener("DOMContentLoaded", ()=>{
   }
 
   waitForSupabase((supa) => {
+    if (!supa) {
+      console.error("[Admin] Failed to initialize - Supabase not available");
+      const guard = document.getElementById("guard");
+      if (guard) {
+        guard.innerHTML = '<p class="err"><strong>Error:</strong> Supabase not configured. Check scripts/supa.js and ensure Supabase CDN is loaded.</p>';
+      }
+      return;
+    }
     initAdmin(supa);
   });
 });
@@ -52,14 +74,48 @@ function initAdmin(supa) {
   const closeM = () => (modal.style.display="none");
 
   // Always attach a click handler so the button is "clickable"
+  if (!login) {
+    console.error("[Admin] Login button not found");
+    return;
+  }
+  
   login.onclick = async () => {
-    if (!supa) { flash("Supabase not configured (scripts/supa.js).", "err"); return; }
-    try { await supa.auth.signOut({ scope: "local" }); } catch(_) {}
-    const { error } = await supa.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: location.href, queryParams: { prompt: "select_account" } }
-    });
-    if (error) flash(error.message, "err");
+    if (!supa) { 
+      flash("Supabase not configured (scripts/supa.js).", "err"); 
+      console.error("[Admin] Supabase client is null");
+      return; 
+    }
+    
+    try {
+      // Clear any existing session first
+      await supa.auth.signOut({ scope: "local" });
+    } catch (e) {
+      console.warn("[Admin] Sign out error (ignored):", e);
+    }
+    
+    try {
+      const { data, error } = await supa.auth.signInWithOAuth({
+        provider: "google",
+        options: { 
+          redirectTo: window.location.origin + window.location.pathname,
+          queryParams: { prompt: "select_account" }
+        }
+      });
+      
+      if (error) {
+        console.error("[Admin] OAuth error:", error);
+        flash(`Sign-in failed: ${error.message}`, "err");
+      } else if (data?.url) {
+        // Redirect will happen automatically
+        console.log("[Admin] Redirecting to:", data.url);
+      } else {
+        console.warn("[Admin] OAuth response missing URL");
+        flash("Sign-in initiated. Please check your browser.", "ok");
+      }
+    } catch (e) {
+      console.error("[Admin] Sign-in exception:", e);
+      flash(`Sign-in error: ${e.message || "Unknown error"}`, "err");
+    }
   };
   logout.onclick = async () => {
     if (!supa) return;
