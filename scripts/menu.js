@@ -80,36 +80,82 @@ document.addEventListener('DOMContentLoaded', () => {
     `).join("");
   }
 
-  // Try Supabase first; if not configured, optionally fallback to JSON
-  const supa = window.getSupabase && window.getSupabase();
+  // Wait for Supabase to be ready, then try loading
+  async function waitForSupabase(maxAttempts = 20) {
+    for (let i = 0; i < maxAttempts; i++) {
+      const supa = window.getSupabase && window.getSupabase();
+      if (supa && supa.auth) {
+        return supa;
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return null;
+  }
 
-  async function loadFromSupabase(){
-    const { data, error } = await supa
-      .from('menu_items')
-      .select('id,category,name_en,name_ar,desc_en,desc_ar,price,image,available,display_order')
-      .order('category', { ascending: true })
-      .order('display_order', { ascending: true })
-      .order('name_en', { ascending: true });
-    if (error) throw error;
-    return data || [];
+  async function loadFromSupabase(supa){
+    if (!supa) {
+      console.log("[Menu] Supabase not available");
+      return null;
+    }
+    try {
+      const { data, error } = await supa
+        .from('menu_items')
+        .select('id,category,name_en,name_ar,desc_en,desc_ar,price,image,available,display_order')
+        .order('category', { ascending: true })
+        .order('display_order', { ascending: true })
+        .order('name_en', { ascending: true });
+      if (error) {
+        console.warn("[Menu] Supabase query error:", error);
+        return null;
+      }
+      console.log("[Menu] Loaded", data?.length || 0, "items from Supabase");
+      return data || [];
+    } catch (e) {
+      console.warn("[Menu] Supabase load exception:", e);
+      return null;
+    }
   }
 
   async function loadFallbackJSON(){
-    const res = await fetch("data/menu.json", { cache: "no-store" });
-    return res.ok ? (await res.json()) : [];
+    try {
+      const res = await fetch("data/menu.json", { cache: "no-store" });
+      if (!res.ok) {
+        console.warn("[Menu] JSON fetch failed:", res.status);
+        return [];
+      }
+      const data = await res.json();
+      console.log("[Menu] Loaded", data?.length || 0, "items from JSON");
+      return data || [];
+    } catch (e) {
+      console.error("[Menu] JSON load error:", e);
+      return [];
+    }
   }
 
   async function init(){
-    try {
-      if (supa) {
-        items = await loadFromSupabase();
-      } else {
-        items = await loadFallbackJSON();
-      }
-    } catch (e) {
-      console.error("[Pantera] load error:", e);
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "<p>Loading menu...</p>";
+    
+    // Wait for Supabase, then try loading
+    const supa = await waitForSupabase();
+    if (supa) {
+      console.log("[Menu] Supabase ready, attempting to load...");
+      items = await loadFromSupabase(supa);
+    } else {
+      console.log("[Menu] Supabase not available");
+    }
+    
+    // Fallback to JSON if Supabase didn't work
+    if (!items || items.length === 0) {
+      console.log("[Menu] Falling back to JSON...");
       items = await loadFallbackJSON();
     }
+    
+    if (!items || items.length === 0) {
+      grid.innerHTML = "<p>No menu items available.</p>";
+      return;
+    }
+    
     categories = uniqueCategories(items);
     renderCategories();
     setLang(lang);
