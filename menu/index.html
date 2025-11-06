@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<base href="../">
+<title>Pantera Resort — Menu</title>
+<meta name="description" content="Pantera Resort — QR Menu">
+<link rel="icon" href="public/images/logo.jpg" />
+<link rel="preload" href="public/fonts/pantera.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <nav class="nav">
+      <div class="brand">
+        <img class="logo" src="public/images/logo.jpg" alt="Pantera Resort logo">
+        <div class="title">Pantera Resort</div>
+      </div>
+      <div class="links">
+        <a href="../">Home</a>
+        <div class="lang-switch">
+          <button id="lang-en">EN</button> | <button id="lang-ar">AR</button>
+        </div>
+      </div>
+    </nav>
+
+    <section class="menu-topbar card">
+      <div class="topbar-row">
+        <h1 class="menu-title" id="title">Menu</h1>
+      </div>
+      <div class="topbar-row">
+        <input id="search" class="search" type="search" placeholder="Search menu…" />
+      </div>
+      <div class="cats" id="cat-wrap"></div>
+    </section>
+
+    <section class="menu-grid" id="grid" aria-live="polite"></section>
+
+    <footer class="footer">© <span id="year"></span> Pantera Resort</footer>
+  </div>
+
+  <script src="scripts/supa.js"></script>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    const t = {
+      en: { title:"Menu", search:"Search menu…", all:"All", currency:"SR" },
+      ar: { title:"القائمة", search:"ابحث في القائمة…", all:"الكل", currency:"ر.س" }
+    };
+    let lang = localStorage.getItem("lang") || "en";
+    let items = [];
+    let categories = [];
+
+    function setLang(l){ lang=l; const ar=lang==='ar';
+      document.documentElement.lang = ar?'ar':'en';
+      document.documentElement.dir  = ar?'rtl':'ltr';
+      document.getElementById('title').textContent = t[lang].title;
+      document.getElementById('search').placeholder = t[lang].search;
+      const all = document.getElementById('cat-all'); if (all) all.textContent = t[lang].all;
+      localStorage.setItem('lang', lang);
+      render();
+    }
+
+    function formatPrice(v){ return `${Number(v).toFixed(2)} ${t[lang].currency}`; }
+    function uniqueCategories(data){ return [...new Set(data.map(i=>i.category).filter(Boolean))]; }
+
+    function currentFilters(){
+      return {
+        q: (document.getElementById("search").value||"").trim().toLowerCase(),
+        cat: document.querySelector(".cat-btn.active")?.dataset.cat || "all"
+      };
+    }
+
+    function onCategoryClick(e){
+      document.querySelectorAll(".cat-btn").forEach(b=>b.classList.remove("active"));
+      e.currentTarget.classList.add("active");
+      render();
+    }
+
+    function renderCategories(){
+      const wrap = document.getElementById("cat-wrap");
+      wrap.innerHTML = "";
+      const allBtn = document.createElement("button");
+      allBtn.id = "cat-all";
+      allBtn.className = "cat-btn active";
+      allBtn.dataset.cat = "all";
+      allBtn.textContent = t[lang].all;
+      allBtn.onclick = onCategoryClick;
+      wrap.appendChild(allBtn);
+      for (const c of categories){
+        const b = document.createElement("button");
+        b.className = "cat-btn";
+        b.dataset.cat = c;
+        b.textContent = c;
+        b.onclick = onCategoryClick;
+        wrap.appendChild(b);
+      }
+    }
+
+    function render(){
+      const grid = document.getElementById("grid");
+      const { q, cat } = currentFilters();
+      const filtered = items.filter(it=>{
+        const byCat = (cat === "all") || (it.category === cat);
+        const text = `${it.name_en} ${it.name_ar||""} ${it.desc_en||""} ${it.desc_ar||""}`.toLowerCase();
+        const byQ = q ? text.includes(q) : true;
+        return byCat && byQ && (it.available !== false);
+      });
+      grid.innerHTML = filtered.map(it=>`
+        <article class="menu-card">
+          <div class="menu-card-top">
+            <div class="menu-name">
+              <strong>${lang==="ar" && it.name_ar ? it.name_ar : it.name_en}</strong>
+              <span class="menu-price">${formatPrice(it.price)}</span>
+            </div>
+            ${it.desc_en || it.desc_ar ? `
+            <div class="menu-desc">
+              ${lang==="ar" && it.desc_ar ? it.desc_ar : (it.desc_en||"")}
+            </div>` : ""}
+          </div>
+          ${it.image ? `<img class="menu-img" src="${it.image}" alt="">` : ""}
+        </article>
+      `).join("");
+    }
+
+    async function load(){
+      // Public SELECT is allowed by RLS; only staff can write.
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select('id,category,name_en,name_ar,desc_en,desc_ar,price,image,available,display_order')
+        .order('category', { ascending: true })
+        .order('display_order', { ascending: true })
+        .order('name_en', { ascending: true });
+      if (error){ console.error(error); return; }
+      items = data || [];
+      categories = uniqueCategories(items);
+      renderCategories();
+      render();
+    }
+
+    document.getElementById('lang-en').onclick = ()=> setLang('en');
+    document.getElementById('lang-ar').onclick = ()=> setLang('ar');
+    document.getElementById('search').addEventListener('input', render);
+
+    setLang(lang);
+    load();
+  </script>
+</body>
+</html>
