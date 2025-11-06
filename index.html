@@ -9,9 +9,15 @@
 <meta property="og:title" content="Pantera Resort">
 <meta property="og:description" content="Unwind in style at Pantera Resort.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="public/images/logo.jpg">
-<link rel="icon" href="public/images/logo.png">
-<link rel="preload" href="public/fonts/pantera.woff2" as="font" type="font/woff2" crossorigin>
+<meta property="og:image" content="public/images/logo2.png">
+<link rel="icon" href="public/images/logo2.png">
+
+<!-- Montserrat (EN) + Tajawal (AR) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+
+
 <link rel="stylesheet" href="styles.css">
 <script defer src="scripts/landing.js"></script>
 </head>
@@ -19,44 +25,49 @@
   <div class="container">
     <nav class="nav">
       <div class="brand">
-        <img class="logo" src="public/images/logo.png" alt="Pantera Resort logo">
-        <div class="title">Pantera Resort</div>
+        <img class="logo" src="public/images/logo.png" alt="">
+        <div class="title" data-i18n="tit">Pantera Resort</div>
       </div>
+    
       <div class="links">
-        <a href="#" data-i18n="nav_home">Home</a>
-        <a href="#facilities" data-i18n="nav_fac">Facilities</a>
-        <a href="#location" data-i18n="nav_loc">Location</a>
-        <a href="#contact" data-i18n="nav_contact">Contact</a>
+        <div class="menu-links">
+          <a href="#" data-i18n="nav_home">Home</a>
+          <a href="#facilities" data-i18n="nav_fac">Facilities</a>
+          <a href="#location" data-i18n="nav_loc">Location</a>
+          <a href="#contact" data-i18n="nav_contact">Contact</a>
+        </div>
+    
         <div class="lang-switch">
-          <button id="lang-en" type="button">EN</button> | <button id="lang-ar" type="button">AR</button>
+          <button id="lang-en" type="button">EN</button>
+          <button id="lang-ar" type="button">AR</button>
         </div>
       </div>
     </nav>
-
+    
     <section class="hero">
       <div class="hero-inner">
         <div>
           <h1 data-i18n="hero_h1">Unwind in Style at Pantera Resort</h1>
-          <p data-i18n="hero_p">A serene Saudi escape—thoughtful spaces, warm service, and effortless comfort.</p>
+          <p data-i18n="hero_p">Thoughtful spaces, warm service, and effortless comfort.</p>
           <div class="ctas">
-            <a class="btn primary" data-i18n="cta_whatsapp" href="https://wa.me/0000000000" target="_blank" rel="noopener">Chat on WhatsApp</a>
-            <a class="btn ghost" data-i18n="cta_call" href="tel:+966000000000">Call Us</a>
+            <a class="btn primary" data-i18n="cta_whatsapp" href="https://wa.me/531865845" target="_blank" rel="noopener">Chat on WhatsApp</a>
+            <a class="btn ghost" data-i18n="cta_call" href="tel:+966531865845">Call Us</a>
           </div>
         </div>
         <div>
-          <img src="public/images/logo.png" alt="Pantera logo" style="width:100%;border-radius:16px;box-shadow:var(--shadow)">
+          <img src="public/images/main.jpg" alt="Pantera logo" style="width:100%;border-radius:16px;box-shadow:var(--shadow)">
         </div>
       </div>
     </section>
 
     <section class="cards" id="facilities">
       <article class="card">
-        <h3 data-i18n="card1_h">Private Pools</h3>
-        <p data-i18n="card1_p">Relax in temperature-controlled privacy.</p>
+        <h3 data-i18n="card1_h">Big Pool</h3>
+        <p data-i18n="card1_p">ُBeat the summer heat.</p>
       </article>
       <article class="card">
         <h3 data-i18n="card2_h">Family Friendly</h3>
-        <p data-i18n="card2_p">Spacious villas and play areas.</p>
+        <p data-i18n="card2_p">Spacious with outdoor seating.</p>
       </article>
       <article class="card">
         <h3 data-i18n="card3_h">Easy Access</h3>
@@ -65,13 +76,22 @@
     </section>
 
     <section id="location" class="card">
-      <h3>Location</h3>
-      <p>Embed Google Map or share coordinates here in Phase 2.</p>
+      <h3 data-i18n="nav_loc">Location</h3>
+      <div class="map-container">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d8152.931616732998!2d50.008925!3d26.328802099999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e361d007613ec45%3A0x519a37fb86c74e8c!2z2LTYp9mE2YrZh9in2Kog2KjYp9mG2KrZitix2Kc!5e1!3m2!1sen!2ssa!4v1762460690322!5m2!1sen!2ssa"
+          style="border:0;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
     </section>
+    
 
     <section id="contact" class="card" style="margin-top:18px;">
       <h3 data-i18n="nav_contact">Contact</h3>
-      <p>Email: <a href="mailto:info@panteraresort.example">info@panteraresort.example</a> · Phone: <a href="tel:+966000000000">+966 00 000 0000</a></p>
+      <p>Email: <a href="mailto:panteraresort@gmail.com">panteraresort@gmail.com</a> · Phone: <a href="tel:+966531865845">+966 53 186 5845</a></p>
     </section>
 
     <footer class="footer" data-i18n="footer">© Pantera Resort</footer>
