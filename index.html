@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pantera Resort</title>
+<meta name="description" content="Pantera Resort — unwind in style. Book your next escape.">
+<meta property="og:title" content="Pantera Resort">
+<meta property="og:description" content="Unwind in style at Pantera Resort.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/public/images/logo.jpg">
+<link rel="icon" href="/public/images/logo.jpg">
+<link rel="preload" href="/public/fonts/pantera.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+<script>
+  // Simple EN/AR toggle
+  const copy = {
+    en: {
+      nav_home: "Home",
+      nav_fac: "Facilities",
+      nav_loc: "Location",
+      nav_contact: "Contact",
+      hero_h1: "Unwind in Style at Pantera Resort",
+      hero_p: "A serene Saudi escape—thoughtful spaces, warm service, and effortless comfort.",
+      cta_whatsapp: "Chat on WhatsApp",
+      cta_call: "Call Us",
+      card1_h: "Private Pools",
+      card1_p: "Relax in temperature‑controlled privacy.",
+      card2_h: "Family Friendly",
+      card2_p: "Spacious villas and play areas.",
+      card3_h: "Easy Access",
+      card3_p: "Convenient location and parking.",
+      footer: "© " + new Date().getFullYear() + " Pantera Resort. All rights reserved."
+    },
+    ar: {
+      nav_home: "الرئيسية",
+      nav_fac: "المرافق",
+      nav_loc: "الموقع",
+      nav_contact: "التواصل",
+      hero_h1: "استرخِ بأناقة في منتجع بانتيرا",
+      hero_p: "ملاذ هادئ بخدمة دافئة ومساحات مريحة.",
+      cta_whatsapp: "واتساب",
+      cta_call: "اتصل بنا",
+      card1_h: "مسابح خاصة",
+      card1_p: "راحة وخصوصية بدرجة حرارة مناسبة.",
+      card2_h: "مناسب للعائلة",
+      card2_p: "فلل واسعة ومناطق لعب.",
+      card3_h: "سهولة الوصول",
+      card3_p: "موقع مميز ومواقف متاحة.",
+      footer: "© " + new Date().getFullYear() + " منتجع بانتيرا. جميع الحقوق محفوظة."
+    }
+  };
+  function setLang(lang){
+    const html = document.documentElement;
+    const isAR = lang === 'ar';
+    html.lang = isAR ? 'ar' : 'en';
+    html.dir = isAR ? 'rtl' : 'ltr';
+    const t = copy[lang];
+    for (const [k,v] of Object.entries(t)){
+      const el = document.querySelector('[data-i18n="'+k+'"]');
+      if (el) el.textContent = v;
+    }
+    localStorage.setItem('lang', lang);
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    setLang(localStorage.getItem('lang') || 'en');
+    document.getElementById('lang-en').addEventListener('click', () => setLang('en'));
+    document.getElementById('lang-ar').addEventListener('click', () => setLang('ar'));
+  });
+</script>
+</head>
+<body>
+  <div class="container">
+    <nav class="nav">
+      <div class="brand">
+        <img class="logo" src="/public/images/logo.jpg" alt="Pantera Resort logo">
+        <div class="title">Pantera Resort</div>
+      </div>
+      <div class="links">
+        <a href="#" data-i18n="nav_home">Home</a>
+        <a href="#facilities" data-i18n="nav_fac">Facilities</a>
+        <a href="#location" data-i18n="nav_loc">Location</a>
+        <a href="#contact" data-i18n="nav_contact">Contact</a>
+        <div class="lang-switch">
+          <button id="lang-en" aria-label="Switch to English">EN</button> | 
+          <button id="lang-ar" aria-label="التبديل إلى العربية">AR</button>
+        </div>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <h1 data-i18n="hero_h1">Unwind in Style at Pantera Resort</h1>
+          <p data-i18n="hero_p">A serene Saudi escape—thoughtful spaces, warm service, and effortless comfort.</p>
+          <div class="ctas">
+            <a class="btn primary" data-i18n="cta_whatsapp" href="https://wa.me/0000000000" target="_blank" rel="noopener">Chat on WhatsApp</a>
+            <a class="btn ghost" data-i18n="cta_call" href="tel:+966000000000">Call Us</a>
+          </div>
+        </div>
+        <div>
+          <img src="/public/images/logo.jpg" alt="Pantera logo" style="width:100%; border-radius:16px; box-shadow:var(--shadow)">
+        </div>
+      </div>
+    </section>
+
+    <section class="cards" id="facilities">
+      <article class="card">
+        <h3 data-i18n="card1_h">Private Pools</h3>
+        <p data-i18n="card1_p">Relax in temperature‑controlled privacy.</p>
+      </article>
+      <article class="card">
+        <h3 data-i18n="card2_h">Family Friendly</h3>
+        <p data-i18n="card2_p">Spacious villas and play areas.</p>
+      </article>
+      <article class="card">
+        <h3 data-i18n="card3_h">Easy Access</h3>
+        <p data-i18n="card3_p">Convenient location and parking.</p>
+      </article>
+    </section>
+
+    <section id="location" class="card">
+      <h3>Location</h3>
+      <p>Embed Google Map or share coordinates here in Phase 2.</p>
+    </section>
+
+    <section id="contact" class="card" style="margin-top:18px;">
+      <h3 data-i18n="nav_contact">Contact</h3>
+      <p>Email: <a href="mailto:info@panteraresort.example">info@panteraresort.example</a> · Phone: <a href="tel:+966000000000">+966 00 000 0000</a></p>
+    </section>
+
+    <footer class="footer" data-i18n="footer">© Pantera Resort</footer>
+  </div>
+</body>
+</html>
