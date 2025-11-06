@@ -70,10 +70,13 @@ document.addEventListener("DOMContentLoaded", ()=>{
 // Handle sign-in (called from button click)
 async function handleSignIn(supa) {
   console.log("[Admin] handleSignIn called");
+  console.log("[Admin] Supabase client passed:", !!supa);
+  
   const flashBox = document.getElementById("flash");
+  console.log("[Admin] Flash box found:", !!flashBox);
   
   function flash(msg, type="ok") {
-    console[type==="ok"?"log":"error"]("[Admin]", msg);
+    console[type==="ok"?"log":"error"]("[Admin] Flash:", msg);
     if (flashBox) {
       flashBox.className = "card " + (type==="ok" ? "ok" : "err");
       flashBox.textContent = msg;
@@ -85,17 +88,28 @@ async function handleSignIn(supa) {
   }
   
   if (!supa) { 
-    flash("Supabase not configured (scripts/supa.js).", "err"); 
     console.error("[Admin] Supabase client is null");
+    flash("Supabase not configured (scripts/supa.js).", "err"); 
     return; 
   }
   
+  console.log("[Admin] Supabase client valid, checking auth...");
+  if (!supa.auth) {
+    console.error("[Admin] Supabase auth is not available");
+    flash("Supabase auth not initialized.", "err");
+    return;
+  }
+  
+  console.log("[Admin] Attempting to sign out existing session...");
   try {
     // Clear any existing session first
-    await supa.auth.signOut({ scope: "local" });
+    const signOutResult = await supa.auth.signOut({ scope: "local" });
+    console.log("[Admin] Sign out completed:", signOutResult);
   } catch (e) {
     console.warn("[Admin] Sign out error (ignored):", e);
   }
+  
+  console.log("[Admin] Proceeding to OAuth sign-in...");
   
   try {
     const redirectUrl = window.location.origin + window.location.pathname;
