@@ -98,28 +98,39 @@ async function handleSignIn(supa) {
   }
   
   try {
+    const redirectUrl = window.location.origin + window.location.pathname;
     console.log("[Admin] Calling signInWithOAuth...");
+    console.log("[Admin] Redirect URL:", redirectUrl);
+    console.log("[Admin] Supabase client:", supa);
+    console.log("[Admin] Supabase auth:", supa.auth);
+    
     const { data, error } = await supa.auth.signInWithOAuth({
       provider: "google",
       options: { 
-        redirectTo: window.location.origin + window.location.pathname,
+        redirectTo: redirectUrl,
         queryParams: { prompt: "select_account" }
       }
     });
     
+    console.log("[Admin] OAuth response received:", { data, error });
+    
     if (error) {
       console.error("[Admin] OAuth error:", error);
       flash(`Sign-in failed: ${error.message}`, "err");
-    } else if (data?.url) {
-      // Redirect will happen automatically
-      console.log("[Admin] Redirecting to:", data.url);
+      return;
+    }
+    
+    if (data?.url) {
+      console.log("[Admin] OAuth URL received, redirecting to:", data.url);
+      // Manually redirect
       window.location.href = data.url;
     } else {
-      console.warn("[Admin] OAuth response missing URL");
-      flash("Sign-in initiated. Please check your browser.", "ok");
+      console.warn("[Admin] OAuth response missing URL, data:", data);
+      flash("Sign-in response received but no redirect URL. Check Supabase configuration.", "err");
     }
   } catch (e) {
     console.error("[Admin] Sign-in exception:", e);
+    console.error("[Admin] Exception stack:", e.stack);
     flash(`Sign-in error: ${e.message || "Unknown error"}`, "err");
   }
 }
