@@ -5,39 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <base href="../">
 <title>Pantera Resort — Admin</title>
-<link rel="icon" href="public/images/logo.jpg" />
-<link rel="stylesheet" href="styles.css?v=2025-11-06" />
+<link rel="icon" href="public/images/logo.png" />
+<link rel="stylesheet" href="styles.css?v=2025-11-06-2" />
 <style>
   table { width:100%; border-collapse:collapse; }
-  th,td{padding:8px 10px; border-bottom:1px solid #eee; text-align:left;}
-  th{background:#faf7f2; position:sticky; top:0;}
-  .err{color:#b00020;font-weight:600;}
-  .ok{color:#056839;font-weight:600;}
-  .actions{display:flex;gap:8px;flex-wrap:wrap;}
-  .edit-btn{background:#fff;border:1px solid var(--accent);}
-  .edit-btn:hover{background:var(--accent);color:#fff;}
-  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);
-    display:none;align-items:center;justify-content:center;z-index:50;}
-  .modal{width:min(720px,95vw);background:#fff;border-radius:16px;
-    box-shadow:var(--shadow);padding:16px;}
-  .modal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
-  .input,.select,.textarea{width:100%;padding:10px;border:1px solid var(--sand-400);
-    border-radius:10px;}
-  .textarea{min-height:80px;resize:vertical;}
+  th,td{ padding:8px 10px; border-bottom:1px solid #eee; text-align:left; }
+  th{ background:#faf7f2; position:sticky; top:0; }
+  .err{ color:#b00020; font-weight:600; }
+  .ok{ color:#056839; font-weight:600; }
+  .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .edit-btn{ background:#fff; border:1px solid var(--accent); }
+  .edit-btn:hover{ background:var(--accent); color:#fff; }
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.4);
+    display:none; align-items:center; justify-content:center; z-index:50; }
+  .modal{ width:min(720px,95vw); background:#fff; border-radius:16px; box-shadow:var(--shadow); padding:16px; }
+  .modal-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  .input,.select,.textarea{ width:100%; padding:10px; border:1px solid var(--sand-400); border-radius:10px; }
+  .textarea{ min-height:80px; resize:vertical; }
 </style>
 </head>
 <body>
 <div class="container">
   <nav class="nav">
     <div class="brand">
-      <img class="logo" src="public/images/logo.jpg" alt="logo">
+      <img class="logo" src="public/images/logo.png" alt="logo">
       <div class="title">Pantera Resort — Admin</div>
     </div>
     <div class="links">
       <a href="../">Site</a>
       <a href="../menu/">Menu</a>
-      <button id="login" class="btn ghost">Sign in with Google</button>
-      <button id="logout" class="btn" style="display:none">Sign out</button>
+      <button id="login" class="btn ghost" type="button">Sign in with Google</button>
+      <button id="logout" class="btn" type="button" style="display:none">Sign out</button>
     </div>
   </nav>
 
@@ -74,7 +72,7 @@
   <footer class="footer">© <span id="year"></span> Pantera Resort</footer>
 </div>
 
-<!-- Modal -->
+<!-- Edit Modal -->
 <div class="modal-backdrop" id="modal-backdrop">
   <div class="modal">
     <h3>Edit Item</h3>
@@ -100,97 +98,211 @@
   </div>
 </div>
 
+<!-- Scripts (defer, in order) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script defer src="scripts/supa.js"></script>
+<script defer src="scripts/supa.js?v=2025-11-06-2"></script>
 <script>
-document.addEventListener("DOMContentLoaded",()=>{
-  const year=document.getElementById("year");year.textContent=new Date().getFullYear();
-  const login=document.getElementById("login"),logout=document.getElementById("logout"),
-        guard=document.getElementById("guard"),form=document.getElementById("form-card"),
-        list=document.getElementById("list-card"),flash=document.getElementById("flash"),
-        items=document.getElementById("items"),modal=document.getElementById("modal-backdrop"),
-        editForm=document.getElementById("edit-form"),cancelEdit=document.getElementById("cancel-edit");
-  const supa=window.getSupabase&&window.getSupabase();
+document.addEventListener("DOMContentLoaded", ()=>{
+  const year = document.getElementById("year"); year.textContent = new Date().getFullYear();
+  const login = document.getElementById("login");
+  const logout = document.getElementById("logout");
+  const guard = document.getElementById("guard");
+  const formCard = document.getElementById("form-card");
+  const listCard = document.getElementById("list-card");
+  const flashBox = document.getElementById("flash");
+  const itemsDiv = document.getElementById("items");
+  const modal = document.getElementById("modal-backdrop");
+  const editForm = document.getElementById("edit-form");
+  const cancelEdit = document.getElementById("cancel-edit");
 
-  function showAuth(a){login.style.display=a?"none":"inline-flex";
-    logout.style.display=a?"inline-flex":"none";
-    guard.style.display=a?"none":"block";
-    form.style.display=a?"block":"none";
-    list.style.display=a?"block":"none";}
-  function msg(t,c="ok"){flash.className="card "+(c==="ok"?"ok":"err");
-    flash.textContent=t;flash.style.display="block";setTimeout(()=>flash.style.display="none",3000);}
-  const openM=()=>modal.style.display="flex",closeM=()=>modal.style.display="none";
+  const supa = window.getSupabase && window.getSupabase();
 
-  async function isStaff(){const {data,error}=await supa.rpc("is_staff");return !error&&!!data;}
+  function showAuth(a){
+    login.style.display = a ? "none" : "inline-flex";
+    logout.style.display = a ? "inline-flex" : "none";
+    guard.style.display = a ? "none" : "block";
+    formCard.style.display = a ? "block" : "none";
+    listCard.style.display = a ? "block" : "none";
+  }
+  function flash(msg, type="ok"){
+    console[type==="ok"?"log":"error"]("[Admin]", msg);
+    flashBox.className = "card " + (type==="ok" ? "ok" : "err");
+    flashBox.textContent = msg;
+    flashBox.style.display = "block";
+    setTimeout(()=> flashBox.style.display="none", 3000);
+  }
+  const openM = () => (modal.style.display="flex");
+  const closeM = () => (modal.style.display="none");
 
-  async function load(){
-    const {data,error}=await supa.from("menu_items").select("*")
-      .order("category").order("display_order").order("name_en");
-    if(error){items.innerHTML="<p class='err'>"+error.message+"</p>";return;}
-    const g={};data.forEach(i=>(g[i.category]??=[]).push(i));
-    items.innerHTML=Object.keys(g).map(c=>`
-      <details open><summary><b>${c}</b></summary>
-      <div style="overflow:auto"><table><thead>
-      <tr><th>ID</th><th>Name</th><th>Price</th><th>Avail</th><th>Order</th><th>Image</th><th>Actions</th></tr>
-      </thead><tbody>${g[c].map(it=>`
-        <tr><td>${it.id}</td><td>${it.name_en}</td><td>${it.price.toFixed(2)}</td>
-        <td>${it.available?"Yes":"No"}</td><td>${it.display_order??0}</td>
-        <td>${it.image||""}</td>
-        <td class="actions">
-          <button class="btn edit-btn" data-edit="${it.id}">Edit</button>
-          <button class="btn" data-del="${it.id}">Delete</button>
-        </td></tr>`).join("")}</tbody></table></div></details>`).join("");
+  // Always attach a click handler so the button is "clickable"
+  login.onclick = async () => {
+    if (!supa) { flash("Supabase not configured (scripts/supa.js).", "err"); return; }
+    try { await supa.auth.signOut({ scope: "local" }); } catch(_) {}
+    const { error } = await supa.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: location.href, queryParams: { prompt: "select_account" } }
+    });
+    if (error) flash(error.message, "err");
+  };
+  logout.onclick = async () => {
+    if (!supa) return;
+    await supa.auth.signOut({ scope: "local" });
+    location.reload();
+  };
 
-    // delete
-    document.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{
-      const id=+b.dataset.del;if(!confirm("Delete item #"+id+"?"))return;
-      const {error}=await supa.from("menu_items").delete().eq("id",id);
-      if(error)return msg(error.message,"err");msg("Deleted.");load();});
-    // edit
-    document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{
-      const id=+b.dataset.edit;const it=data.find(x=>x.id===id);
-      if(!it)return;for(const f of ["id","category","name_en","name_ar",
-        "desc_en","desc_ar","image"])editForm[f].value=it[f]||"";
-      editForm.price.value=it.price||0;editForm.available.value=it.available?"true":"false";
-      editForm.display_order.value=it.display_order||0;openM();});
+  async function isStaff(){
+    if (!supa) return false;
+    const { data, error } = await supa.rpc("is_staff");
+    if (error) { console.error("is_staff error:", error); return false; }
+    return !!data;
   }
 
-  document.getElementById("item-form").onsubmit=async e=>{
-    e.preventDefault();const f=new FormData(e.target);
-    const p={category:f.get("category"),price:+f.get("price"),
-      name_en:f.get("name_en"),name_ar:f.get("name_ar")||null,
-      desc_en:f.get("desc_en")||null,desc_ar:f.get("desc_ar")||null,
-      image:f.get("image")||null,available:f.get("available")==="true",
-      display_order:+f.get("display_order")||0};
-    const {error}=await supa.from("menu_items").insert(p);
-    if(error)return msg(error.message,"err");msg("Added.");e.target.reset();load();
-  };
-  editForm.onsubmit=async e=>{
-    e.preventDefault();const f=new FormData(e.target);
-    const id=+f.get("id"),p={category:f.get("category"),price:+f.get("price"),
-      name_en:f.get("name_en"),name_ar:f.get("name_ar")||null,
-      desc_en:f.get("desc_en")||null,desc_ar:f.get("desc_ar")||null,
-      image:f.get("image")||null,available:f.get("available")==="true",
-      display_order:+f.get("display_order")||0};
-    const {error}=await supa.from("menu_items").update(p).eq("id",id);
-    if(error)return msg(error.message,"err");msg("Updated.");closeM();load();
-  };
-  cancelEdit.onclick=closeM;modal.onclick=e=>{if(e.target===modal)closeM();};
+  async function loadItems(){
+    const { data, error } = await supa
+      .from("menu_items")
+      .select("*")
+      .order("category")
+      .order("display_order")
+      .order("name_en");
+    if (error) { itemsDiv.innerHTML = `<p class="err">${error.message}</p>`; return; }
+    if (!data?.length) { itemsDiv.innerHTML = "<p>No items yet.</p>"; return; }
 
-  login.onclick=async()=>{await supa.auth.signOut({scope:"local"});
-    await supa.auth.signInWithOAuth({provider:"google",
-      options:{redirectTo:location.href,queryParams:{prompt:"select_account"}}});};
-  logout.onclick=async()=>{await supa.auth.signOut({scope:"local"});location.reload();};
+    const groups = {};
+    for (const it of data) (groups[it.category] ||= []).push(it);
 
-  supa.auth.onAuthStateChange(async(_,s)=>{
-    if(!s?.user)return showAuth(false);
-    if(!(await isStaff())){showAuth(false);msg("Unauthorized","err");
-      return supa.auth.signOut({scope:"local"});}
-    showAuth(true);load();});
-  (async()=>{const {data:{session}}=await supa.auth.getSession();
-    if(!session?.user)return showAuth(false);
-    if(!(await isStaff())){showAuth(false);return supa.auth.signOut({scope:"local"});}
-    showAuth(true);load();})();
+    itemsDiv.innerHTML = Object.keys(groups).map(cat => {
+      const rows = groups[cat].map(it => `
+        <tr>
+          <td>${it.id}</td>
+          <td>${it.name_en}${it.name_ar ? ` / <span dir="rtl">${it.name_ar}</span>` : ""}</td>
+          <td>${Number(it.price).toFixed(2)}</td>
+          <td>${it.available ? "Yes" : "No"}</td>
+          <td>${it.display_order ?? 0}</td>
+          <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.image || ""}</td>
+          <td class="actions">
+            <button class="btn edit-btn" data-edit="${it.id}" type="button">Edit</button>
+            <button class="btn" data-del="${it.id}" type="button">Delete</button>
+          </td>
+        </tr>
+      `).join("");
+      return `
+        <details open>
+          <summary><strong>${cat}</strong> (${groups[cat].length})</summary>
+          <div style="overflow:auto">
+            <table>
+              <thead><tr><th>ID</th><th>Name</th><th>Price</th><th>Avail.</th><th>Order</th><th>Image</th><th>Actions</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </details>
+      `;
+    }).join("");
+
+    // Delete buttons
+    document.querySelectorAll("[data-del]").forEach(btn => {
+      btn.onclick = async () => {
+        const id = Number(btn.dataset.del);
+        if (!confirm(`Delete item #${id}?`)) return;
+        const { error } = await supa.from("menu_items").delete().eq("id", id);
+        if (error) { flash(error.message, "err"); return; }
+        flash("Deleted.");
+        loadItems();
+      };
+    });
+
+    // Edit buttons
+    document.querySelectorAll("[data-edit]").forEach(btn => {
+      btn.onclick = () => {
+        const id = Number(btn.dataset.edit);
+        const item = Object.values(groups).flat().find(x => x.id === id);
+        if (!item) return;
+        // Prefill modal
+        editForm.id.value = item.id;
+        editForm.category.value = item.category || "";
+        editForm.price.value = Number(item.price || 0).toFixed(2);
+        editForm.name_en.value = item.name_en || "";
+        editForm.name_ar.value = item.name_ar || "";
+        editForm.desc_en.value = item.desc_en || "";
+        editForm.desc_ar.value = item.desc_ar || "";
+        editForm.image.value = item.image || "";
+        editForm.available.value = item.available ? "true" : "false";
+        editForm.display_order.value = Number(item.display_order || 0);
+        openM();
+      };
+    });
+  }
+
+  // Add
+  document.getElementById("item-form").onsubmit = async (e) => {
+    e.preventDefault();
+    if (!supa) { flash("Supabase not configured.", "err"); return; }
+    const fd = new FormData(e.target);
+    const p = {
+      category: (fd.get("category")||"").trim(),
+      price: Number(fd.get("price")),
+      name_en: (fd.get("name_en")||"").trim(),
+      name_ar: (fd.get("name_ar")||"").trim() || null,
+      desc_en: (fd.get("desc_en")||"").trim() || null,
+      desc_ar: (fd.get("desc_ar")||"").trim() || null,
+      image: (fd.get("image")||"").trim() || null,
+      available: fd.get("available") === "true",
+      display_order: Number(fd.get("display_order")||0)
+    };
+    if (!p.category || !p.name_en || isNaN(p.price)) { flash("Fill Category, Name (EN), Price.", "err"); return; }
+    const { error } = await supa.from("menu_items").insert(p);
+    if (error) { flash(error.message, "err"); return; }
+    e.target.reset(); flash("Added."); loadItems();
+  };
+
+  // Edit Save
+  editForm.onsubmit = async (e) => {
+    e.preventDefault();
+    if (!supa) { flash("Supabase not configured.", "err"); return; }
+    const fd = new FormData(editForm);
+    const id = Number(fd.get("id"));
+    const p = {
+      category: (fd.get("category")||"").trim(),
+      price: Number(fd.get("price")),
+      name_en: (fd.get("name_en")||"").trim(),
+      name_ar: (fd.get("name_ar")||"").trim() || null,
+      desc_en: (fd.get("desc_en")||"").trim() || null,
+      desc_ar: (fd.get("desc_ar")||"").trim() || null,
+      image: (fd.get("image")||"").trim() || null,
+      available: fd.get("available") === "true",
+      display_order: Number(fd.get("display_order")||0)
+    };
+    if (!id || !p.category || !p.name_en || isNaN(p.price)) { flash("Check required fields.", "err"); return; }
+    const { error } = await supa.from("menu_items").update(p).eq("id", id);
+    if (error) { flash(error.message, "err"); return; }
+    flash("Updated."); closeM(); loadItems();
+  };
+  cancelEdit.onclick = closeM; modal.onclick = e => { if (e.target === modal) closeM(); };
+
+  // Auth flow
+  if (!supa) { showAuth(false); return; }
+
+  supa.auth.onAuthStateChange(async (_evt, session) => {
+    if (!session?.user) { showAuth(false); return; }
+    const ok = await isStaff();
+    if (!ok) {
+      showAuth(false); flash("This Google account is not authorized. Try another.", "err");
+      await supa.auth.signOut({ scope: "local" });
+      return;
+    }
+    showAuth(true); loadItems();
+  });
+
+  (async () => {
+    const { data:{ session } } = await supa.auth.getSession();
+    if (!session?.user) { showAuth(false); return; }
+    const ok = await isStaff();
+    if (!ok) {
+      showAuth(false);
+      await supa.auth.signOut({ scope: "local" });
+      return;
+    }
+    showAuth(true); loadItems();
+  })();
 });
 </script>
 </body>
