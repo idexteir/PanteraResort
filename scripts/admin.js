@@ -199,9 +199,17 @@ function initAdmin(supa) {
   };
 
   async function isStaff(){
-    if (!supa) return false;
+    if (!supa) {
+      console.log("[Admin] isStaff: No Supabase client");
+      return false;
+    }
+    console.log("[Admin] isStaff: Calling RPC...");
     const { data, error } = await supa.rpc("is_staff");
-    if (error) { console.error("is_staff error:", error); return false; }
+    if (error) { 
+      console.error("[Admin] is_staff RPC error:", error); 
+      return false; 
+    }
+    console.log("[Admin] is_staff RPC result:", data);
     return !!data;
   }
 
@@ -329,27 +337,58 @@ function initAdmin(supa) {
   // Auth flow
   if (!supa) { showAuth(false); return; }
 
-  supa.auth.onAuthStateChange(async (_evt, session) => {
-    if (!session?.user) { showAuth(false); return; }
+  supa.auth.onAuthStateChange(async (event, session) => {
+    console.log("[Admin] Auth state changed:", event, session?.user?.email);
+    if (!session?.user) { 
+      console.log("[Admin] No session in auth state change");
+      showAuth(false); 
+      return; 
+    }
+    console.log("[Admin] Session found, checking if staff...");
     const ok = await isStaff();
+    console.log("[Admin] Staff check result:", ok);
     if (!ok) {
-      showAuth(false); flash("This Google account is not authorized. Try another.", "err");
+      showAuth(false); 
+      flash("This Google account is not authorized. Try another.", "err");
       await supa.auth.signOut({ scope: "local" });
       return;
     }
-    showAuth(true); loadItems();
+    console.log("[Admin] Staff authorized, showing admin interface");
+    showAuth(true); 
+    loadItems();
   });
 
+  // Check for existing session on page load (including after OAuth redirect)
   (async () => {
-    const { data:{ session } } = await supa.auth.getSession();
-    if (!session?.user) { showAuth(false); return; }
+    console.log("[Admin] Checking for existing session...");
+    // Wait a bit for OAuth callback to be processed
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const { data: sessionData, error: sessionError } = await supa.auth.getSession();
+    console.log("[Admin] getSession result:", { 
+      hasSession: !!sessionData?.session, 
+      user: sessionData?.session?.user?.email,
+      error: sessionError 
+    });
+    
+    if (!sessionData?.session?.user) { 
+      console.log("[Admin] No existing session found");
+      showAuth(false); 
+      return; 
+    }
+    
+    console.log("[Admin] Session found, checking if staff...");
     const ok = await isStaff();
+    console.log("[Admin] Staff check result:", ok);
     if (!ok) {
       showAuth(false);
+      flash("This Google account is not authorized. Try another.", "err");
       await supa.auth.signOut({ scope: "local" });
       return;
     }
-    showAuth(true); loadItems();
+    console.log("[Admin] Staff authorized, showing admin interface");
+    showAuth(true); 
+    loadItems();
   })();
 }
 
