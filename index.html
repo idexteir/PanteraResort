@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="./">
 <title>Pantera Resort</title>
 <meta name="description" content="Pantera Resort — unwind in style. Book your next escape.">
 <meta property="og:title" content="Pantera Resort">
 <meta property="og:description" content="Unwind in style at Pantera Resort.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="/public/images/logo.jpg">
-<link rel="icon" href="/public/images/logo.jpg">
-<link rel="preload" href="/public/fonts/pantera.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/styles.css">
+<meta property="og:image" content="public/images/logo.jpg">
+<link rel="icon" href="public/images/logo.jpg">
+<link rel="preload" href="public/fonts/pantera.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
 <script>
-  // Simple EN/AR toggle
   const copy = {
     en: {
       nav_home: "Home",
@@ -25,7 +25,7 @@
       cta_whatsapp: "Chat on WhatsApp",
       cta_call: "Call Us",
       card1_h: "Private Pools",
-      card1_p: "Relax in temperature‑controlled privacy.",
+      card1_p: "Relax in temperature-controlled privacy.",
       card2_h: "Family Friendly",
       card2_p: "Spacious villas and play areas.",
       card3_h: "Easy Access",
@@ -51,21 +51,21 @@
     }
   };
   function setLang(lang){
-    const html = document.documentElement;
-    const isAR = lang === 'ar';
-    html.lang = isAR ? 'ar' : 'en';
-    html.dir = isAR ? 'rtl' : 'ltr';
-    const t = copy[lang];
-    for (const [k,v] of Object.entries(t)){
-      const el = document.querySelector('[data-i18n="'+k+'"]');
-      if (el) el.textContent = v;
+    const html=document.documentElement;
+    const isAR=lang==='ar';
+    html.lang=isAR?'ar':'en';
+    html.dir=isAR?'rtl':'ltr';
+    const t=copy[lang];
+    for(const[k,v] of Object.entries(t)){
+      const el=document.querySelector('[data-i18n="'+k+'"]');
+      if(el)el.textContent=v;
     }
-    localStorage.setItem('lang', lang);
+    localStorage.setItem('lang',lang);
   }
-  document.addEventListener('DOMContentLoaded', () => {
-    setLang(localStorage.getItem('lang') || 'en');
-    document.getElementById('lang-en').addEventListener('click', () => setLang('en'));
-    document.getElementById('lang-ar').addEventListener('click', () => setLang('ar'));
+  document.addEventListener('DOMContentLoaded',()=>{
+    setLang(localStorage.getItem('lang')||'en');
+    document.getElementById('lang-en').onclick=()=>setLang('en');
+    document.getElementById('lang-ar').onclick=()=>setLang('ar');
   });
 </script>
 </head>
@@ -73,7 +73,7 @@
   <div class="container">
     <nav class="nav">
       <div class="brand">
-        <img class="logo" src="/public/images/logo.jpg" alt="Pantera Resort logo">
+        <img class="logo" src="public/images/logo.jpg" alt="Pantera Resort logo">
         <div class="title">Pantera Resort</div>
       </div>
       <div class="links">
@@ -82,8 +82,7 @@
         <a href="#location" data-i18n="nav_loc">Location</a>
         <a href="#contact" data-i18n="nav_contact">Contact</a>
         <div class="lang-switch">
-          <button id="lang-en" aria-label="Switch to English">EN</button> | 
-          <button id="lang-ar" aria-label="التبديل إلى العربية">AR</button>
+          <button id="lang-en">EN</button> | <button id="lang-ar">AR</button>
         </div>
       </div>
     </nav>
@@ -99,7 +98,7 @@
           </div>
         </div>
         <div>
-          <img src="/public/images/logo.jpg" alt="Pantera logo" style="width:100%; border-radius:16px; box-shadow:var(--shadow)">
+          <img src="public/images/logo.jpg" alt="Pantera logo" style="width:100%;border-radius:16px;box-shadow:var(--shadow)">
         </div>
       </div>
     </section>
@@ -107,7 +106,7 @@
     <section class="cards" id="facilities">
       <article class="card">
         <h3 data-i18n="card1_h">Private Pools</h3>
-        <p data-i18n="card1_p">Relax in temperature‑controlled privacy.</p>
+        <p data-i18n="card1_p">Relax in temperature-controlled privacy.</p>
       </article>
       <article class="card">
         <h3 data-i18n="card2_h">Family Friendly</h3>
