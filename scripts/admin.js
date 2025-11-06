@@ -100,14 +100,16 @@ async function handleSignIn(supa) {
     return;
   }
   
-  console.log("[Admin] Attempting to sign out existing session...");
-  try {
-    // Clear any existing session first
-    const signOutResult = await supa.auth.signOut({ scope: "local" });
-    console.log("[Admin] Sign out completed:", signOutResult);
-  } catch (e) {
+  console.log("[Admin] Attempting to sign out existing session (with timeout)...");
+  // Sign out with timeout - don't block if it hangs
+  const signOutPromise = supa.auth.signOut({ scope: "local" }).catch(e => {
     console.warn("[Admin] Sign out error (ignored):", e);
-  }
+  });
+  
+  // Wait max 2 seconds for sign out, then proceed
+  const timeoutPromise = new Promise(resolve => setTimeout(resolve, 2000));
+  await Promise.race([signOutPromise, timeoutPromise]);
+  console.log("[Admin] Sign out attempt completed (or timed out)");
   
   console.log("[Admin] Proceeding to OAuth sign-in...");
   
