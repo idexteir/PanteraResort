@@ -1,38 +1,42 @@
-/* Pantera Resort — Supabase bootstrap (stable)
-   1) Load order on pages:
-        <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script defer src="scripts/supa.js"></script>
-   2) Fill SUPABASE_URL and SUPABASE_ANON with your real values.
+/* Pantera Resort — Supabase bootstrap (safe)
+   1) Ensure the Supabase CDN is loaded BEFORE this file:
+      <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <script defer src="scripts/supa.js"></script>
+   2) Put your real URL/key below.
 */
 
 (function () {
-    // === EDIT THESE TWO LINES ===
-    const SUPABASE_URL  = "https://gqxsnpdalsnpwcbyagyy.supabase.co";   // e.g., https://abcd1234.supabase.co
-    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxeHNucGRhbHNucHdjYnlhZ3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0Mzk3OTksImV4cCI6MjA3ODAxNTc5OX0.toFDFvKW3nJeSwxaIhU3jgR390plKNVrCyUK5TMOsDI";                    // long jwt-like string
-    // ============================
+    // TODO: replace with your real values from Supabase → Settings → API
+    const SUPABASE_URL  = "https://gqxsnpdalsnpwcbyagyy.supabase.co";   // <-- change me
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxeHNucGRhbHNucHdjYnlhZ3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0Mzk3OTksImV4cCI6MjA3ODAxNTc5OX0.toFDFvKW3nJeSwxaIhU3jgR390plKNVrCyUK5TMOsDI";                    // <-- change me
   
-    // Soft checks + logs (never block the page)
+    // Guard: CDN must be present
     if (typeof window.supabase === "undefined") {
-      console.error("[Pantera] supabase-js CDN not loaded. Include it BEFORE scripts/supa.js");
+      console.error("[Pantera] Supabase JS CDN not loaded. Include it BEFORE scripts/supa.js.");
       window.getSupabase = () => null;
       return;
     }
-    if (!/^https:\/\/.+\.supabase\.co$/.test(SUPABASE_URL) || SUPABASE_ANON.length < 20) {
-      console.error("[Pantera] Supabase URL/key look unset. Update scripts/supa.js with real values.");
+  
+    // Guard: prevent using placeholders in production
+    const hasPlaceholders =
+      !SUPABASE_URL.startsWith("https://") ||
+      /YOUR-PROJECT-REF/i.test(SUPABASE_URL) ||
+      /YOUR_PUBLIC_ANON_KEY/i.test(SUPABASE_ANON);
+  
+    if (hasPlaceholders) {
+      console.error("[Pantera] Supabase URL/key not set in scripts/supa.js");
+      window.getSupabase = () => null;
+      return;
     }
   
-    // Create or reuse client; never throw here
-    try {
-      window.supabaseClient =
-        window.supabaseClient ||
-        window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-        });
-      window.getSupabase = () => window.supabaseClient;
-      console.log("[Pantera] Supabase client ready.");
-    } catch (e) {
-      console.error("[Pantera] Failed to create Supabase client:", e);
-      window.getSupabase = () => null;
-    }
+    // Create (or reuse) the global client; persist session & refresh tokens automatically
+    window.supabaseClient =
+      window.supabaseClient ||
+      window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      });
+  
+    // Getter for other scripts
+    window.getSupabase = () => window.supabaseClient;
   })();
   
