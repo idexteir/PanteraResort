@@ -16,6 +16,9 @@
   .actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .edit-btn{ background:#fff; border:1px solid var(--accent); }
   .edit-btn:hover{ background:var(--accent); color:#fff; }
+  button.btn{ color:inherit; font-size:inherit; cursor:pointer; }
+  button.btn.ghost{ color:var(--accent); background:#fff; }
+  button.btn.ghost:hover{ background:var(--sand-50); }
   .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.4);
     display:none; align-items:center; justify-content:center; z-index:50; }
   .modal{ width:min(720px,95vw); background:#fff; border-radius:16px; box-shadow:var(--shadow); padding:16px; }

@@ -79,6 +79,17 @@ function initAdmin(supa) {
     return;
   }
   
+  // Ensure button text is visible
+  if (!login.textContent || login.textContent.trim() === "") {
+    console.warn("[Admin] Button text is empty, setting default");
+    login.textContent = "Sign in with Google";
+  }
+  
+  // Ensure button is visible
+  login.style.display = login.style.display || "inline-flex";
+  
+  console.log("[Admin] Login button found:", login.textContent, login.style.display);
+  
   login.onclick = async () => {
     if (!supa) { 
       flash("Supabase not configured (scripts/supa.js).", "err"); 
