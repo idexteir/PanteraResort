@@ -1,6 +1,29 @@
+console.log("[Admin] Script loading...");
+
 document.addEventListener("DOMContentLoaded", ()=>{
+  console.log("[Admin] DOMContentLoaded fired");
   const year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();
+
+  // Attach button handler immediately (before waiting for Supabase)
+  const loginBtn = document.getElementById("login");
+  if (loginBtn) {
+    console.log("[Admin] Login button found, attaching immediate handler");
+    loginBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("[Admin] Login button clicked!");
+      const supa = window.getSupabase && window.getSupabase();
+      if (!supa) {
+        alert("Supabase is not ready yet. Please wait a moment and try again.");
+        console.error("[Admin] Supabase not ready when button clicked");
+        return;
+      }
+      // Call the actual sign-in function
+      handleSignIn(supa);
+    };
+  } else {
+    console.error("[Admin] Login button not found in DOM");
+  }
 
   // Wait for Supabase to be ready
   function waitForSupabase(callback, maxAttempts = 50) {
@@ -44,7 +67,65 @@ document.addEventListener("DOMContentLoaded", ()=>{
   });
 });
 
+// Handle sign-in (called from button click)
+async function handleSignIn(supa) {
+  console.log("[Admin] handleSignIn called");
+  const flashBox = document.getElementById("flash");
+  
+  function flash(msg, type="ok") {
+    console[type==="ok"?"log":"error"]("[Admin]", msg);
+    if (flashBox) {
+      flashBox.className = "card " + (type==="ok" ? "ok" : "err");
+      flashBox.textContent = msg;
+      flashBox.style.display = "block";
+      setTimeout(()=> flashBox.style.display="none", 3000);
+    } else {
+      alert(msg);
+    }
+  }
+  
+  if (!supa) { 
+    flash("Supabase not configured (scripts/supa.js).", "err"); 
+    console.error("[Admin] Supabase client is null");
+    return; 
+  }
+  
+  try {
+    // Clear any existing session first
+    await supa.auth.signOut({ scope: "local" });
+  } catch (e) {
+    console.warn("[Admin] Sign out error (ignored):", e);
+  }
+  
+  try {
+    console.log("[Admin] Calling signInWithOAuth...");
+    const { data, error } = await supa.auth.signInWithOAuth({
+      provider: "google",
+      options: { 
+        redirectTo: window.location.origin + window.location.pathname,
+        queryParams: { prompt: "select_account" }
+      }
+    });
+    
+    if (error) {
+      console.error("[Admin] OAuth error:", error);
+      flash(`Sign-in failed: ${error.message}`, "err");
+    } else if (data?.url) {
+      // Redirect will happen automatically
+      console.log("[Admin] Redirecting to:", data.url);
+      window.location.href = data.url;
+    } else {
+      console.warn("[Admin] OAuth response missing URL");
+      flash("Sign-in initiated. Please check your browser.", "ok");
+    }
+  } catch (e) {
+    console.error("[Admin] Sign-in exception:", e);
+    flash(`Sign-in error: ${e.message || "Unknown error"}`, "err");
+  }
+}
+
 function initAdmin(supa) {
+  console.log("[Admin] initAdmin called with Supabase client");
   const login = document.getElementById("login");
   const logout = document.getElementById("logout");
   const guard = document.getElementById("guard");
@@ -57,77 +138,33 @@ function initAdmin(supa) {
   const cancelEdit = document.getElementById("cancel-edit");
 
   function showAuth(a){
-    login.style.display = a ? "none" : "inline-flex";
-    logout.style.display = a ? "inline-flex" : "none";
-    guard.style.display = a ? "none" : "block";
-    formCard.style.display = a ? "block" : "none";
-    listCard.style.display = a ? "block" : "none";
+    if (login) login.style.display = a ? "none" : "inline-flex";
+    if (logout) logout.style.display = a ? "inline-flex" : "none";
+    if (guard) guard.style.display = a ? "none" : "block";
+    if (formCard) formCard.style.display = a ? "block" : "none";
+    if (listCard) listCard.style.display = a ? "block" : "none";
   }
   function flash(msg, type="ok"){
     console[type==="ok"?"log":"error"]("[Admin]", msg);
-    flashBox.className = "card " + (type==="ok" ? "ok" : "err");
-    flashBox.textContent = msg;
-    flashBox.style.display = "block";
-    setTimeout(()=> flashBox.style.display="none", 3000);
+    if (flashBox) {
+      flashBox.className = "card " + (type==="ok" ? "ok" : "err");
+      flashBox.textContent = msg;
+      flashBox.style.display = "block";
+      setTimeout(()=> flashBox.style.display="none", 3000);
+    }
   }
-  const openM = () => (modal.style.display="flex");
-  const closeM = () => (modal.style.display="none");
+  const openM = () => (modal && (modal.style.display="flex"));
+  const closeM = () => (modal && (modal.style.display="none"));
 
-  // Always attach a click handler so the button is "clickable"
-  if (!login) {
-    console.error("[Admin] Login button not found");
-    return;
+  // Update button handler to use the shared function
+  if (login) {
+    console.log("[Admin] Updating login button handler");
+    login.onclick = function(e) {
+      e.preventDefault();
+      console.log("[Admin] Login button clicked (from initAdmin)");
+      handleSignIn(supa);
+    };
   }
-  
-  // Ensure button text is visible
-  if (!login.textContent || login.textContent.trim() === "") {
-    console.warn("[Admin] Button text is empty, setting default");
-    login.textContent = "Sign in with Google";
-  }
-  
-  // Ensure button is visible
-  login.style.display = login.style.display || "inline-flex";
-  
-  console.log("[Admin] Login button found:", login.textContent, login.style.display);
-  
-  login.onclick = async () => {
-    if (!supa) { 
-      flash("Supabase not configured (scripts/supa.js).", "err"); 
-      console.error("[Admin] Supabase client is null");
-      return; 
-    }
-    
-    try {
-      // Clear any existing session first
-      await supa.auth.signOut({ scope: "local" });
-    } catch (e) {
-      console.warn("[Admin] Sign out error (ignored):", e);
-    }
-    
-    try {
-      const { data, error } = await supa.auth.signInWithOAuth({
-        provider: "google",
-        options: { 
-          redirectTo: window.location.origin + window.location.pathname,
-          queryParams: { prompt: "select_account" }
-        }
-      });
-      
-      if (error) {
-        console.error("[Admin] OAuth error:", error);
-        flash(`Sign-in failed: ${error.message}`, "err");
-      } else if (data?.url) {
-        // Redirect will happen automatically
-        console.log("[Admin] Redirecting to:", data.url);
-      } else {
-        console.warn("[Admin] OAuth response missing URL");
-        flash("Sign-in initiated. Please check your browser.", "ok");
-      }
-    } catch (e) {
-      console.error("[Admin] Sign-in exception:", e);
-      flash(`Sign-in error: ${e.message || "Unknown error"}`, "err");
-    }
-  };
   logout.onclick = async () => {
     if (!supa) return;
     await supa.auth.signOut({ scope: "local" });
