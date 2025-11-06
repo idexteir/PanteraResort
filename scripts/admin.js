@@ -1,5 +1,28 @@
 document.addEventListener("DOMContentLoaded", ()=>{
-  const year = document.getElementById("year"); year.textContent = new Date().getFullYear();
+  const year = document.getElementById("year");
+  if (year) year.textContent = new Date().getFullYear();
+
+  // Wait for Supabase to be ready
+  function waitForSupabase(callback, maxAttempts = 50) {
+    const supa = window.getSupabase && window.getSupabase();
+    if (supa) {
+      callback(supa);
+      return;
+    }
+    if (maxAttempts <= 0) {
+      console.error("[Admin] Supabase not available after waiting");
+      callback(null);
+      return;
+    }
+    setTimeout(() => waitForSupabase(callback, maxAttempts - 1), 100);
+  }
+
+  waitForSupabase((supa) => {
+    initAdmin(supa);
+  });
+});
+
+function initAdmin(supa) {
   const login = document.getElementById("login");
   const logout = document.getElementById("logout");
   const guard = document.getElementById("guard");
@@ -10,8 +33,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const modal = document.getElementById("modal-backdrop");
   const editForm = document.getElementById("edit-form");
   const cancelEdit = document.getElementById("cancel-edit");
-
-  const supa = window.getSupabase && window.getSupabase();
 
   function showAuth(a){
     login.style.display = a ? "none" : "inline-flex";
@@ -199,6 +220,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     }
     showAuth(true); loadItems();
   })();
-});
+}
 
 
