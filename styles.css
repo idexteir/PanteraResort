@@ -43,6 +43,8 @@ a:hover{text-decoration:underline;}
 .card h3{margin:0 0 8px;}
 .card p{margin:0;color:var(--muted);}
 .footer{text-align:center;color:var(--muted);padding:28px 0 60px;}
+.editable { background:#fff7e6; border-bottom:1px dashed #d3c2a3; cursor:text; }
+
 @media(max-width:900px){
   .hero-inner{grid-template-columns:1fr;}
   .cards{grid-template-columns:1fr;}

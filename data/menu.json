@@ -1,0 +1,18 @@
+[
+    { "id": 1, "category": "Drinks", "name_en": "Pepsi Can or Bottle",   "name_ar": "بيبسي علبة أو زجاجة",            "price": 2.50, "image": "" },
+    { "id": 2, "category": "Drinks", "name_en": "7UP Can or Bottle",     "name_ar": "سفن آب علبة أو زجاجة",           "price": 2.50, "image": "" },
+    { "id": 3, "category": "Drinks", "name_en": "Mirinda Orange Can or Bottle", "name_ar": "ميرندا برتقال علبة أو زجاجة", "price": 2.50, "image": "" },
+    { "id": 4, "category": "Drinks", "name_en": "Mirinda Citrus Can or Bottle", "name_ar": "ميرندا حمضيات علبة أو زجاجة", "price": 2.50, "image": "" },
+    { "id": 5, "category": "Drinks", "name_en": "Coca Cola Bottle",      "name_ar": "كوكاكولا زجاجة",                 "price": 3.00, "image": "" },
+    { "id": 6, "category": "Drinks", "name_en": "Al Rabie Orange Juice", "name_ar": "عصير الربيع برتقال",              "price": 1.00, "image": "" },
+    { "id": 7, "category": "Drinks", "name_en": "Holsten Beer",          "name_ar": "هولستن بيرة",                    "price": 6.00, "image": "" },
+  
+    { "id": 101, "category": "Chocolate", "name_en": "Twix",        "name_ar": "تويكس",           "price": 3.00, "image": "" },
+    { "id": 102, "category": "Chocolate", "name_en": "Snickers",    "name_ar": "سنيكرس",          "price": 3.00, "image": "" },
+    { "id": 103, "category": "Chocolate", "name_en": "Bounty",      "name_ar": "باونتي",          "price": 3.00, "image": "" },
+    { "id": 104, "category": "Chocolate", "name_en": "Mars",        "name_ar": "مارس",            "price": 3.50, "image": "" },
+    { "id": 105, "category": "Chocolate", "name_en": "M&Ms",        "name_ar": "إم آند إمز",      "price": 3.50, "image": "" },
+    { "id": 106, "category": "Chocolate", "name_en": "Kit Kat",     "name_ar": "كت كات",          "price": 1.50, "image": "" },
+    { "id": 107, "category": "Chocolate", "name_en": "Oreo Biscuit","name_ar": "بسكويت أوريو",    "price": 1.50, "image": "" }
+  ]
+  
