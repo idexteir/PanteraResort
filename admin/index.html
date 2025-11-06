@@ -6,248 +6,192 @@
 <base href="../">
 <title>Pantera Resort — Admin</title>
 <link rel="icon" href="public/images/logo.jpg" />
-<link rel="preload" href="public/fonts/pantera.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="styles.css?v=2025-11-06" />
 <style>
-  table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: left; }
-  th { background: #faf7f2; position: sticky; top: 0; z-index: 1; }
-  .err { color: #b00020; font-weight: 600; }
-  .ok  { color: #056839; font-weight: 600; }
+  table { width:100%; border-collapse:collapse; }
+  th,td{padding:8px 10px; border-bottom:1px solid #eee; text-align:left;}
+  th{background:#faf7f2; position:sticky; top:0;}
+  .err{color:#b00020;font-weight:600;}
+  .ok{color:#056839;font-weight:600;}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .edit-btn{background:#fff;border:1px solid var(--accent);}
+  .edit-btn:hover{background:var(--accent);color:#fff;}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);
+    display:none;align-items:center;justify-content:center;z-index:50;}
+  .modal{width:min(720px,95vw);background:#fff;border-radius:16px;
+    box-shadow:var(--shadow);padding:16px;}
+  .modal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  .input,.select,.textarea{width:100%;padding:10px;border:1px solid var(--sand-400);
+    border-radius:10px;}
+  .textarea{min-height:80px;resize:vertical;}
 </style>
 </head>
 <body>
-  <div class="container">
-    <nav class="nav">
-      <div class="brand">
-        <img class="logo" src="public/images/logo.jpg" alt="Pantera Resort logo">
-        <div class="title">Pantera Resort — Admin</div>
+<div class="container">
+  <nav class="nav">
+    <div class="brand">
+      <img class="logo" src="public/images/logo.jpg" alt="logo">
+      <div class="title">Pantera Resort — Admin</div>
+    </div>
+    <div class="links">
+      <a href="../">Site</a>
+      <a href="../menu/">Menu</a>
+      <button id="login" class="btn ghost">Sign in with Google</button>
+      <button id="logout" class="btn" style="display:none">Sign out</button>
+    </div>
+  </nav>
+
+  <section class="card" id="guard">
+    <p><strong>Staff only.</strong> Sign in with a whitelisted Google account.</p>
+  </section>
+
+  <section class="card" id="flash" style="display:none"></section>
+
+  <section class="card" id="form-card" style="display:none">
+    <h3>Add Item</h3>
+    <form id="item-form">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+        <label>Category<input name="category" required class="input"></label>
+        <label>Price (SAR)<input name="price" required type="number" step="0.01" class="input"></label>
+        <label>Name (EN)<input name="name_en" required class="input"></label>
+        <label>Name (AR)<input name="name_ar" dir="rtl" class="input"></label>
+        <label>Description (EN)<input name="desc_en" class="input"></label>
+        <label>Description (AR)<input name="desc_ar" dir="rtl" class="input"></label>
+        <label>Image URL<input name="image" class="input"></label>
+        <label>Available<select name="available" class="select">
+          <option value="true" selected>Yes</option><option value="false">No</option></select></label>
+        <label>Display Order<input name="display_order" type="number" value="0" class="input"></label>
       </div>
-      <div class="links">
-        <a href="../">Site</a>
-        <a href="menu/">Menu</a>
-        <button id="login" class="btn ghost" type="button">Sign in with Google</button>
-        <button id="logout" class="btn" type="button" style="display:none">Sign out</button>
+      <button class="btn primary" type="submit" style="margin-top:12px">Add</button>
+    </form>
+  </section>
+
+  <section class="card" id="list-card" style="display:none">
+    <h3>Items</h3>
+    <div id="items">Loading…</div>
+  </section>
+
+  <footer class="footer">© <span id="year"></span> Pantera Resort</footer>
+</div>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h3>Edit Item</h3>
+    <form id="edit-form">
+      <input type="hidden" name="id">
+      <div class="modal-grid">
+        <label>Category<input name="category" class="input" required></label>
+        <label>Price (SAR)<input name="price" class="input" type="number" step="0.01" required></label>
+        <label>Name (EN)<input name="name_en" class="input" required></label>
+        <label>Name (AR)<input name="name_ar" class="input" dir="rtl"></label>
+        <label>Description (EN)<textarea name="desc_en" class="textarea"></textarea></label>
+        <label>Description (AR)<textarea name="desc_ar" class="textarea" dir="rtl"></textarea></label>
+        <label>Image URL<input name="image" class="input"></label>
+        <label>Available<select name="available" class="select">
+          <option value="true">Yes</option><option value="false">No</option></select></label>
+        <label>Display Order<input name="display_order" class="input" type="number" value="0"></label>
       </div>
-    </nav>
-
-    <section class="card" id="guard">
-      <p><strong>Staff only.</strong> Please sign in with a whitelisted Google account to manage menu items.</p>
-      <p>Whitelist lives in <code>public.staff_emails</code> (Supabase).</p>
-    </section>
-
-    <section class="card" id="flash" style="display:none"></section>
-
-    <section class="card" id="form-card" style="display:none">
-      <h3>Add Item</h3>
-      <form id="item-form">
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
-          <label>Category
-            <input required name="category" placeholder="Drinks / Chocolate">
-          </label>
-          <label>Price (SAR)
-            <input required name="price" type="number" step="0.01" min="0" placeholder="2.50">
-          </label>
-          <label>Name (EN)
-            <input required name="name_en" placeholder="Pepsi Can or Bottle">
-          </label>
-          <label>Name (AR)
-            <input name="name_ar" dir="rtl" placeholder="بيبسي علبة أو زجاجة">
-          </label>
-          <label>Description (EN)
-            <input name="desc_en" placeholder="optional">
-          </label>
-          <label>Description (AR)
-            <input name="desc_ar" dir="rtl" placeholder="اختياري">
-          </label>
-          <label>Image URL
-            <input name="image" placeholder="public/images/pepsi.jpg (optional)">
-          </label>
-          <label>Available
-            <select name="available">
-              <option value="true" selected>Yes</option>
-              <option value="false">No</option>
-            </select>
-          </label>
-          <label>Display Order
-            <input name="display_order" type="number" value="0">
-          </label>
-        </div>
-        <div style="margin-top:12px">
-          <button class="btn primary" type="submit">Add Item</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="card" id="list-card" style="display:none">
-      <h3>Items</h3>
-      <div id="items">Loading…</div>
-    </section>
-
-    <footer class="footer">© <span id="year"></span> Pantera Resort</footer>
+      <div style="text-align:right;margin-top:12px">
+        <button type="button" id="cancel-edit" class="btn">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
   </div>
+</div>
 
-  <!-- Load scripts with defer to preserve order and avoid blocking -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="scripts/supa.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="scripts/supa.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+  const year=document.getElementById("year");year.textContent=new Date().getFullYear();
+  const login=document.getElementById("login"),logout=document.getElementById("logout"),
+        guard=document.getElementById("guard"),form=document.getElementById("form-card"),
+        list=document.getElementById("list-card"),flash=document.getElementById("flash"),
+        items=document.getElementById("items"),modal=document.getElementById("modal-backdrop"),
+        editForm=document.getElementById("edit-form"),cancelEdit=document.getElementById("cancel-edit");
+  const supa=window.getSupabase&&window.getSupabase();
 
-  <script>
-    // Defer inline so DOM exists
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById("year").textContent = new Date().getFullYear();
+  function showAuth(a){login.style.display=a?"none":"inline-flex";
+    logout.style.display=a?"inline-flex":"none";
+    guard.style.display=a?"none":"block";
+    form.style.display=a?"block":"none";
+    list.style.display=a?"block":"none";}
+  function msg(t,c="ok"){flash.className="card "+(c==="ok"?"ok":"err");
+    flash.textContent=t;flash.style.display="block";setTimeout(()=>flash.style.display="none",3000);}
+  const openM=()=>modal.style.display="flex",closeM=()=>modal.style.display="none";
 
-      // Elements
-      const loginBtn  = document.getElementById('login');
-      const logoutBtn = document.getElementById('logout');
-      const guard     = document.getElementById('guard');
-      const formCard  = document.getElementById('form-card');
-      const listCard  = document.getElementById('list-card');
-      const itemsDiv  = document.getElementById('items');
-      const flashBox  = document.getElementById('flash');
-      const form      = document.getElementById('item-form');
+  async function isStaff(){const {data,error}=await supa.rpc("is_staff");return !error&&!!data;}
 
-      // Supabase client (may be null if keys not set)
-      const supa = window.getSupabase && window.getSupabase();
+  async function load(){
+    const {data,error}=await supa.from("menu_items").select("*")
+      .order("category").order("display_order").order("name_en");
+    if(error){items.innerHTML="<p class='err'>"+error.message+"</p>";return;}
+    const g={};data.forEach(i=>(g[i.category]??=[]).push(i));
+    items.innerHTML=Object.keys(g).map(c=>`
+      <details open><summary><b>${c}</b></summary>
+      <div style="overflow:auto"><table><thead>
+      <tr><th>ID</th><th>Name</th><th>Price</th><th>Avail</th><th>Order</th><th>Image</th><th>Actions</th></tr>
+      </thead><tbody>${g[c].map(it=>`
+        <tr><td>${it.id}</td><td>${it.name_en}</td><td>${it.price.toFixed(2)}</td>
+        <td>${it.available?"Yes":"No"}</td><td>${it.display_order??0}</td>
+        <td>${it.image||""}</td>
+        <td class="actions">
+          <button class="btn edit-btn" data-edit="${it.id}">Edit</button>
+          <button class="btn" data-del="${it.id}">Delete</button>
+        </td></tr>`).join("")}</tbody></table></div></details>`).join("");
 
-      function flash(msg, type='ok'){
-        flashBox.className = 'card ' + (type === 'ok' ? 'ok' : 'err');
-        flashBox.textContent = msg;
-        flashBox.style.display = 'block';
-        setTimeout(()=>{ flashBox.style.display='none'; }, 2800);
-      }
-      function showAuthedUI(isAuthed){
-        loginBtn.style.display = isAuthed ? 'none' : 'inline-flex';
-        logoutBtn.style.display = isAuthed ? 'inline-flex' : 'none';
-        guard.style.display = isAuthed ? 'none' : 'block';
-        formCard.style.display = isAuthed ? 'block' : 'none';
-        listCard.style.display = isAuthed ? 'block' : 'none';
-      }
+    // delete
+    document.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{
+      const id=+b.dataset.del;if(!confirm("Delete item #"+id+"?"))return;
+      const {error}=await supa.from("menu_items").delete().eq("id",id);
+      if(error)return msg(error.message,"err");msg("Deleted.");load();});
+    // edit
+    document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{
+      const id=+b.dataset.edit;const it=data.find(x=>x.id===id);
+      if(!it)return;for(const f of ["id","category","name_en","name_ar",
+        "desc_en","desc_ar","image"])editForm[f].value=it[f]||"";
+      editForm.price.value=it.price||0;editForm.available.value=it.available?"true":"false";
+      editForm.display_order.value=it.display_order||0;openM();});
+  }
 
-      // If supa is null, disable actions but keep button clickable (shows message)
-      if (!supa) {
-        showAuthedUI(false);
-        loginBtn.onclick = () => flash('Supabase is not configured. Edit scripts/supa.js with your URL and anon key.', 'err');
-        return;
-      }
+  document.getElementById("item-form").onsubmit=async e=>{
+    e.preventDefault();const f=new FormData(e.target);
+    const p={category:f.get("category"),price:+f.get("price"),
+      name_en:f.get("name_en"),name_ar:f.get("name_ar")||null,
+      desc_en:f.get("desc_en")||null,desc_ar:f.get("desc_ar")||null,
+      image:f.get("image")||null,available:f.get("available")==="true",
+      display_order:+f.get("display_order")||0};
+    const {error}=await supa.from("menu_items").insert(p);
+    if(error)return msg(error.message,"err");msg("Added.");e.target.reset();load();
+  };
+  editForm.onsubmit=async e=>{
+    e.preventDefault();const f=new FormData(e.target);
+    const id=+f.get("id"),p={category:f.get("category"),price:+f.get("price"),
+      name_en:f.get("name_en"),name_ar:f.get("name_ar")||null,
+      desc_en:f.get("desc_en")||null,desc_ar:f.get("desc_ar")||null,
+      image:f.get("image")||null,available:f.get("available")==="true",
+      display_order:+f.get("display_order")||0};
+    const {error}=await supa.from("menu_items").update(p).eq("id",id);
+    if(error)return msg(error.message,"err");msg("Updated.");closeM();load();
+  };
+  cancelEdit.onclick=closeM;modal.onclick=e=>{if(e.target===modal)closeM();};
 
-      async function loadItems(){
-        itemsDiv.textContent = 'Loading…';
-        const { data, error } = await supa
-          .from('menu_items')
-          .select('*')
-          .order('category', { ascending: true })
-          .order('display_order', { ascending: true })
-          .order('name_en', { ascending: true });
+  login.onclick=async()=>{await supa.auth.signOut({scope:"local"});
+    await supa.auth.signInWithOAuth({provider:"google",
+      options:{redirectTo:location.href,queryParams:{prompt:"select_account"}}});};
+  logout.onclick=async()=>{await supa.auth.signOut({scope:"local"});location.reload();};
 
-        if (error) {
-          itemsDiv.innerHTML = `<p class="err">${error.message}</p>`;
-          return;
-        }
-        if (!data || !data.length){
-          itemsDiv.innerHTML = "<p>No items yet.</p>";
-          return;
-        }
-
-        const groups = {};
-        for (const it of data) {
-          groups[it.category] = groups[it.category] || [];
-          groups[it.category].push(it);
-        }
-        const cats = Object.keys(groups);
-
-        itemsDiv.innerHTML = cats.map(cat=>{
-          const rows = groups[cat].map(it=>`
-            <tr>
-              <td>${it.id}</td>
-              <td>${it.name_en}${it.name_ar ? ` / <span dir="rtl">${it.name_ar}</span>` : ""}</td>
-              <td>${(Number(it.price)).toFixed(2)}</td>
-              <td>${it.available ? "Yes" : "No"}</td>
-              <td>${it.display_order ?? 0}</td>
-              <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.image||""}</td>
-              <td><button class="btn" data-del="${it.id}" type="button">Delete</button></td>
-            </tr>
-          `).join('');
-          return `
-            <details open>
-              <summary><strong>${cat}</strong> (${groups[cat].length})</summary>
-              <div style="overflow:auto">
-                <table>
-                  <thead>
-                    <tr><th>ID</th><th>Name</th><th>Price</th><th>Avail.</th><th>Order</th><th>Image</th><th>Actions</th></tr>
-                  </thead>
-                  <tbody>${rows}</tbody>
-                </table>
-              </div>
-            </details>
-          `;
-        }).join('');
-
-        document.querySelectorAll('[data-del]').forEach(btn=>{
-          btn.onclick = async () => {
-            const id = Number(btn.dataset.del);
-            if (!confirm(`Delete item #${id}?`)) return;
-            const { error } = await supa.from('menu_items').delete().eq('id', id);
-            if (error) { flash(error.message, 'err'); return; }
-            flash('Deleted.');
-            loadItems();
-          };
-        });
-      }
-
-      form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        const fd = new FormData(form);
-        const payload = {
-          category: (fd.get('category')||'').trim(),
-          price: Number(fd.get('price')),
-          name_en: (fd.get('name_en')||'').trim(),
-          name_ar: (fd.get('name_ar')||'').trim() || null,
-          desc_en: (fd.get('desc_en')||'').trim() || null,
-          desc_ar: (fd.get('desc_ar')||'').trim() || null,
-          image:   (fd.get('image')  ||'').trim() || null,
-          available: fd.get('available') === 'true',
-          display_order: Number(fd.get('display_order')||0)
-        };
-        if (!payload.category || !payload.name_en || isNaN(payload.price)) {
-          flash('Please fill Category, Name (EN), and Price.', 'err');
-          return;
-        }
-        const { error } = await supa.from('menu_items').insert(payload);
-        if (error) { flash(error.message, 'err'); return; }
-        form.reset();
-        flash('Item added.');
-        loadItems();
-      });
-
-      // Auth — redirect flow (reliable on mobile)
-      loginBtn.onclick = async () => {
-        const { error } = await supa.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: location.href,
-            queryParams: { prompt: 'select_account' }
-          }
-        });
-        if (error) flash(error.message, 'err');
-      };
-      logoutBtn.onclick = async () => {
-        await supa.auth.signOut();
-        location.reload();
-      };
-
-      supa.auth.onAuthStateChange(async (_evt, session) => {
-        const authed = !!session?.user;
-        showAuthedUI(authed);
-        if (authed) loadItems();
-      });
-
-      (async () => {
-        const { data: { session } } = await supa.auth.getSession();
-        const authed = !!session?.user;
-        showAuthedUI(authed);
-        if (authed) loadItems();
-      })();
-    });
-  </script>
+  supa.auth.onAuthStateChange(async(_,s)=>{
+    if(!s?.user)return showAuth(false);
+    if(!(await isStaff())){showAuth(false);msg("Unauthorized","err");
+      return supa.auth.signOut({scope:"local"});}
+    showAuth(true);load();});
+  (async()=>{const {data:{session}}=await supa.auth.getSession();
+    if(!session?.user)return showAuth(false);
+    if(!(await isStaff())){showAuth(false);return supa.auth.signOut({scope:"local"});}
+    showAuth(true);load();})();
+});
+</script>
 </body>
 </html>
