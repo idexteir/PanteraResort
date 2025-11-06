@@ -367,52 +367,63 @@ function initAdmin(supa) {
     const hasHash = window.location.hash && window.location.hash.length > 1;
     console.log("[Admin] Has hash fragment:", hasHash);
     
-    // Wait longer for OAuth callback to be processed (especially if hash is present)
-    const waitTime = hasHash ? 2000 : 500;
-    console.log("[Admin] Waiting", waitTime, "ms for session processing...");
-    await new Promise(resolve => setTimeout(resolve, waitTime));
+    // Use a promise that resolves when we get a session (either from getSession or onAuthStateChange)
+    let sessionResolved = false;
+    let resolvedSession = null;
     
-    // Try multiple times if we have a hash (OAuth callback)
-    let sessionData = null;
-    let sessionError = null;
-    const maxRetries = hasHash ? 3 : 1;
+    // Set up a one-time listener for auth state change (catches OAuth callback)
+    const authStatePromise = new Promise((resolve) => {
+      const unsubscribe = supa.auth.onAuthStateChange((event, session) => {
+        console.log("[Admin] onAuthStateChange in session check:", event, session?.user?.email);
+        if (session?.user && !sessionResolved) {
+          sessionResolved = true;
+          resolvedSession = session;
+          unsubscribe();
+          resolve(session);
+        }
+      });
+      
+      // Cleanup after 10 seconds
+      setTimeout(() => {
+        unsubscribe();
+        if (!sessionResolved) resolve(null);
+      }, 10000);
+    });
     
-    for (let i = 0; i < maxRetries; i++) {
-      console.log("[Admin] getSession attempt", i + 1, "of", maxRetries);
+    // Also try getSession with timeout
+    const getSessionPromise = (async () => {
+      const waitTime = hasHash ? 2000 : 500;
+      console.log("[Admin] Waiting", waitTime, "ms before getSession...");
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      
       try {
-        const result = await supa.auth.getSession();
-        sessionData = result.data;
-        sessionError = result.error;
-        console.log("[Admin] getSession result:", { 
-          hasSession: !!sessionData?.session, 
-          user: sessionData?.session?.user?.email,
-          error: sessionError 
-        });
-        
-        if (sessionData?.session?.user) {
-          break; // Got a session, stop retrying
-        }
-        
-        if (i < maxRetries - 1) {
-          console.log("[Admin] No session yet, waiting 1 second before retry...");
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("getSession timeout")), 3000)
+        );
+        const result = await Promise.race([supa.auth.getSession(), timeoutPromise]);
+        console.log("[Admin] getSession completed:", !!result.data?.session);
+        return result.data?.session || null;
       } catch (e) {
-        console.error("[Admin] getSession exception:", e);
-        sessionError = e;
-        if (i < maxRetries - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+        console.error("[Admin] getSession failed:", e.message);
+        return null;
       }
-    }
+    })();
     
-    if (!sessionData?.session?.user) { 
-      console.log("[Admin] No existing session found after retries");
+    // Wait for either method to get a session
+    console.log("[Admin] Waiting for session from either method...");
+    const session = await Promise.race([
+      authStatePromise,
+      getSessionPromise.then(s => s || new Promise(() => {})) // Don't resolve if null
+    ]).catch(() => null) || resolvedSession || await getSessionPromise;
+    
+    if (!session?.user) { 
+      console.log("[Admin] No session found");
       showAuth(false); 
       return; 
     }
     
-    console.log("[Admin] Session found, checking if staff...");
+    console.log("[Admin] Session found:", session.user.email);
+    console.log("[Admin] Checking if staff...");
     const ok = await isStaff();
     console.log("[Admin] Staff check result:", ok);
     if (!ok) {
