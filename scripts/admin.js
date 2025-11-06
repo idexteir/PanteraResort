@@ -361,18 +361,53 @@ function initAdmin(supa) {
   // Check for existing session on page load (including after OAuth redirect)
   (async () => {
     console.log("[Admin] Checking for existing session...");
-    // Wait a bit for OAuth callback to be processed
-    await new Promise(resolve => setTimeout(resolve, 500));
+    console.log("[Admin] Current URL:", window.location.href);
     
-    const { data: sessionData, error: sessionError } = await supa.auth.getSession();
-    console.log("[Admin] getSession result:", { 
-      hasSession: !!sessionData?.session, 
-      user: sessionData?.session?.user?.email,
-      error: sessionError 
-    });
+    // Check if there's a hash fragment (OAuth callback)
+    const hasHash = window.location.hash && window.location.hash.length > 1;
+    console.log("[Admin] Has hash fragment:", hasHash);
+    
+    // Wait longer for OAuth callback to be processed (especially if hash is present)
+    const waitTime = hasHash ? 2000 : 500;
+    console.log("[Admin] Waiting", waitTime, "ms for session processing...");
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+    
+    // Try multiple times if we have a hash (OAuth callback)
+    let sessionData = null;
+    let sessionError = null;
+    const maxRetries = hasHash ? 3 : 1;
+    
+    for (let i = 0; i < maxRetries; i++) {
+      console.log("[Admin] getSession attempt", i + 1, "of", maxRetries);
+      try {
+        const result = await supa.auth.getSession();
+        sessionData = result.data;
+        sessionError = result.error;
+        console.log("[Admin] getSession result:", { 
+          hasSession: !!sessionData?.session, 
+          user: sessionData?.session?.user?.email,
+          error: sessionError 
+        });
+        
+        if (sessionData?.session?.user) {
+          break; // Got a session, stop retrying
+        }
+        
+        if (i < maxRetries - 1) {
+          console.log("[Admin] No session yet, waiting 1 second before retry...");
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } catch (e) {
+        console.error("[Admin] getSession exception:", e);
+        sessionError = e;
+        if (i < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
     
     if (!sessionData?.session?.user) { 
-      console.log("[Admin] No existing session found");
+      console.log("[Admin] No existing session found after retries");
       showAuth(false); 
       return; 
     }
