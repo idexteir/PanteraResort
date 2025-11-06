@@ -9,7 +9,6 @@
 <link rel="preload" href="public/fonts/pantera.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css" />
 <style>
-  /* a few admin table tweaks */
   table { width: 100%; border-collapse: collapse; }
   th, td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: left; }
   th { background: #faf7f2; position: sticky; top: 0; z-index: 1; }
@@ -27,14 +26,14 @@
       <div class="links">
         <a href="../">Site</a>
         <a href="menu/">Menu</a>
-        <button id="login" class="btn ghost">Sign in with Google</button>
-        <button id="logout" class="btn" style="display:none">Sign out</button>
+        <button id="login" class="btn ghost" type="button">Sign in with Google</button>
+        <button id="logout" class="btn" type="button" style="display:none">Sign out</button>
       </div>
     </nav>
 
     <section class="card" id="guard">
       <p><strong>Staff only.</strong> Please sign in with a whitelisted Google account to manage menu items.</p>
-      <p>Whitelisted emails live in the Supabase table <code>public.staff_emails</code>.</p>
+      <p>Whitelist lives in <code>public.staff_emails</code> (Supabase).</p>
     </section>
 
     <section class="card" id="flash" style="display:none"></section>
@@ -88,166 +87,167 @@
     <footer class="footer">© <span id="year"></span> Pantera Resort</footer>
   </div>
 
-  <!-- Supabase CDN then project bootstrap -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="scripts/supa.js"></script>
+  <!-- Load scripts with defer to preserve order and avoid blocking -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="scripts/supa.js"></script>
 
   <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
+    // Defer inline so DOM exists
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById("year").textContent = new Date().getFullYear();
 
-    // Elements
-    const loginBtn = document.getElementById('login');
-    const logoutBtn = document.getElementById('logout');
-    const guard     = document.getElementById('guard');
-    const formCard  = document.getElementById('form-card');
-    const listCard  = document.getElementById('list-card');
-    const itemsDiv  = document.getElementById('items');
-    const flashBox  = document.getElementById('flash');
-    const form      = document.getElementById('item-form');
+      // Elements
+      const loginBtn  = document.getElementById('login');
+      const logoutBtn = document.getElementById('logout');
+      const guard     = document.getElementById('guard');
+      const formCard  = document.getElementById('form-card');
+      const listCard  = document.getElementById('list-card');
+      const itemsDiv  = document.getElementById('items');
+      const flashBox  = document.getElementById('flash');
+      const form      = document.getElementById('item-form');
 
-    // Supabase client
-    const supa = window.getSupabase();
+      // Supabase client (may be null if keys not set)
+      const supa = window.getSupabase && window.getSupabase();
 
-    // UI helpers
-    function flash(msg, type='ok'){
-      flashBox.className = 'card ' + (type === 'ok' ? 'ok' : 'err');
-      flashBox.textContent = msg;
-      flashBox.style.display = 'block';
-      setTimeout(()=>{ flashBox.style.display='none'; }, 2800);
-    }
-    function showAuthedUI(isAuthed){
-      loginBtn.style.display = isAuthed ? 'none' : 'inline-flex';
-      logoutBtn.style.display = isAuthed ? 'inline-flex' : 'none';
-      guard.style.display = isAuthed ? 'none' : 'block';
-      formCard.style.display = isAuthed ? 'block' : 'none';
-      listCard.style.display = isAuthed ? 'block' : 'none';
-    }
-
-    // CRUD
-    async function loadItems(){
-      itemsDiv.textContent = 'Loading…';
-      const { data, error } = await supa
-        .from('menu_items')
-        .select('*')
-        .order('category', { ascending: true })
-        .order('display_order', { ascending: true })
-        .order('name_en', { ascending: true });
-
-      if (error) {
-        itemsDiv.innerHTML = `<p class="err">${error.message}</p>`;
-        return;
+      function flash(msg, type='ok'){
+        flashBox.className = 'card ' + (type === 'ok' ? 'ok' : 'err');
+        flashBox.textContent = msg;
+        flashBox.style.display = 'block';
+        setTimeout(()=>{ flashBox.style.display='none'; }, 2800);
       }
-      if (!data || !data.length){
-        itemsDiv.innerHTML = "<p>No items yet.</p>";
+      function showAuthedUI(isAuthed){
+        loginBtn.style.display = isAuthed ? 'none' : 'inline-flex';
+        logoutBtn.style.display = isAuthed ? 'inline-flex' : 'none';
+        guard.style.display = isAuthed ? 'none' : 'block';
+        formCard.style.display = isAuthed ? 'block' : 'none';
+        listCard.style.display = isAuthed ? 'block' : 'none';
+      }
+
+      // If supa is null, disable actions but keep button clickable (shows message)
+      if (!supa) {
+        showAuthedUI(false);
+        loginBtn.onclick = () => flash('Supabase is not configured. Edit scripts/supa.js with your URL and anon key.', 'err');
         return;
       }
 
-      // Group by category
-      const groups = {};
-      for (const it of data) {
-        groups[it.category] = groups[it.category] || [];
-        groups[it.category].push(it);
-      }
-      const cats = Object.keys(groups);
+      async function loadItems(){
+        itemsDiv.textContent = 'Loading…';
+        const { data, error } = await supa
+          .from('menu_items')
+          .select('*')
+          .order('category', { ascending: true })
+          .order('display_order', { ascending: true })
+          .order('name_en', { ascending: true });
 
-      itemsDiv.innerHTML = cats.map(cat=>{
-        const rows = groups[cat].map(it=>`
-          <tr>
-            <td>${it.id}</td>
-            <td>${it.name_en}${it.name_ar ? ` / <span dir="rtl">${it.name_ar}</span>` : ""}</td>
-            <td>${(Number(it.price)).toFixed(2)}</td>
-            <td>${it.available ? "Yes" : "No"}</td>
-            <td>${it.display_order ?? 0}</td>
-            <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.image||""}</td>
-            <td>
-              <button class="btn" data-del="${it.id}">Delete</button>
-            </td>
-          </tr>
-        `).join('');
-        return `
-          <details open>
-            <summary><strong>${cat}</strong> (${groups[cat].length})</summary>
-            <div style="overflow:auto">
-              <table>
-                <thead>
-                  <tr><th>ID</th><th>Name</th><th>Price</th><th>Avail.</th><th>Order</th><th>Image</th><th>Actions</th></tr>
-                </thead>
-                <tbody>${rows}</tbody>
-              </table>
-            </div>
-          </details>
-        `;
-      }).join('');
-
-      // Wire deletes
-      document.querySelectorAll('[data-del]').forEach(btn=>{
-        btn.onclick = async () => {
-          const id = Number(btn.dataset.del);
-          if (!confirm(`Delete item #${id}?`)) return;
-          const { error } = await supa.from('menu_items').delete().eq('id', id);
-          if (error) { flash(error.message, 'err'); return; }
-          flash('Deleted.');
-          loadItems();
-        };
-      });
-    }
-
-    // Add item
-    form.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const fd = new FormData(form);
-      const payload = {
-        category: (fd.get('category')||'').trim(),
-        price: Number(fd.get('price')),
-        name_en: (fd.get('name_en')||'').trim(),
-        name_ar: (fd.get('name_ar')||'').trim() || null,
-        desc_en: (fd.get('desc_en')||'').trim() || null,
-        desc_ar: (fd.get('desc_ar')||'').trim() || null,
-        image:   (fd.get('image')  ||'').trim() || null,
-        available: fd.get('available') === 'true',
-        display_order: Number(fd.get('display_order')||0)
-      };
-      if (!payload.category || !payload.name_en || isNaN(payload.price)) {
-        flash('Please fill Category, Name (EN), and Price.', 'err');
-        return;
-      }
-      const { error } = await supa.from('menu_items').insert(payload);
-      if (error) { flash(error.message, 'err'); return; }
-      form.reset();
-      flash('Item added.');
-      loadItems();
-    });
-
-    // Auth — redirect flow (mobile-friendly)
-    loginBtn.onclick = async () => {
-      const { error } = await supa.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: location.href,           // return to this admin page
-          queryParams: { prompt: 'select_account' }
+        if (error) {
+          itemsDiv.innerHTML = `<p class="err">${error.message}</p>`;
+          return;
         }
+        if (!data || !data.length){
+          itemsDiv.innerHTML = "<p>No items yet.</p>";
+          return;
+        }
+
+        const groups = {};
+        for (const it of data) {
+          groups[it.category] = groups[it.category] || [];
+          groups[it.category].push(it);
+        }
+        const cats = Object.keys(groups);
+
+        itemsDiv.innerHTML = cats.map(cat=>{
+          const rows = groups[cat].map(it=>`
+            <tr>
+              <td>${it.id}</td>
+              <td>${it.name_en}${it.name_ar ? ` / <span dir="rtl">${it.name_ar}</span>` : ""}</td>
+              <td>${(Number(it.price)).toFixed(2)}</td>
+              <td>${it.available ? "Yes" : "No"}</td>
+              <td>${it.display_order ?? 0}</td>
+              <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.image||""}</td>
+              <td><button class="btn" data-del="${it.id}" type="button">Delete</button></td>
+            </tr>
+          `).join('');
+          return `
+            <details open>
+              <summary><strong>${cat}</strong> (${groups[cat].length})</summary>
+              <div style="overflow:auto">
+                <table>
+                  <thead>
+                    <tr><th>ID</th><th>Name</th><th>Price</th><th>Avail.</th><th>Order</th><th>Image</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </details>
+          `;
+        }).join('');
+
+        document.querySelectorAll('[data-del]').forEach(btn=>{
+          btn.onclick = async () => {
+            const id = Number(btn.dataset.del);
+            if (!confirm(`Delete item #${id}?`)) return;
+            const { error } = await supa.from('menu_items').delete().eq('id', id);
+            if (error) { flash(error.message, 'err'); return; }
+            flash('Deleted.');
+            loadItems();
+          };
+        });
+      }
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const fd = new FormData(form);
+        const payload = {
+          category: (fd.get('category')||'').trim(),
+          price: Number(fd.get('price')),
+          name_en: (fd.get('name_en')||'').trim(),
+          name_ar: (fd.get('name_ar')||'').trim() || null,
+          desc_en: (fd.get('desc_en')||'').trim() || null,
+          desc_ar: (fd.get('desc_ar')||'').trim() || null,
+          image:   (fd.get('image')  ||'').trim() || null,
+          available: fd.get('available') === 'true',
+          display_order: Number(fd.get('display_order')||0)
+        };
+        if (!payload.category || !payload.name_en || isNaN(payload.price)) {
+          flash('Please fill Category, Name (EN), and Price.', 'err');
+          return;
+        }
+        const { error } = await supa.from('menu_items').insert(payload);
+        if (error) { flash(error.message, 'err'); return; }
+        form.reset();
+        flash('Item added.');
+        loadItems();
       });
-      if (error) flash(error.message, 'err');
-    };
-    logoutBtn.onclick = async () => {
-      await supa.auth.signOut();
-      location.reload();
-    };
 
-    // Keep UI in sync with session
-    supa.auth.onAuthStateChange(async (_evt, session) => {
-      const authed = !!session?.user;
-      showAuthedUI(authed);
-      if (authed) loadItems();
+      // Auth — redirect flow (reliable on mobile)
+      loginBtn.onclick = async () => {
+        const { error } = await supa.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: location.href,
+            queryParams: { prompt: 'select_account' }
+          }
+        });
+        if (error) flash(error.message, 'err');
+      };
+      logoutBtn.onclick = async () => {
+        await supa.auth.signOut();
+        location.reload();
+      };
+
+      supa.auth.onAuthStateChange(async (_evt, session) => {
+        const authed = !!session?.user;
+        showAuthedUI(authed);
+        if (authed) loadItems();
+      });
+
+      (async () => {
+        const { data: { session } } = await supa.auth.getSession();
+        const authed = !!session?.user;
+        showAuthedUI(authed);
+        if (authed) loadItems();
+      })();
     });
-
-    // Initial state (after redirect back)
-    (async () => {
-      const { data: { session } } = await supa.auth.getSession();
-      const authed = !!session?.user;
-      showAuthedUI(authed);
-      if (authed) loadItems();
-    })();
   </script>
 </body>
 </html>
