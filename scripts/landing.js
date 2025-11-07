@@ -15,9 +15,9 @@
       cta_whatsapp: "Chat on WhatsApp",
       cta_call: "Call Us",
       card1_h: "Big Pool",
-      card1_p: "Beat the summer heat.",
+      card1_p: "Comfort and privacy.",
       card2_h: "Family Friendly",
-      card2_p: "Spacious villa and play areas.",
+      card2_p: "Spacious and queit.",
       card3_h: "Easy Access",
       card3_p: "Convenient location and parking.",
       footer: "© " + new Date().getFullYear() + " Pantera Resort. All rights reserved."
@@ -37,7 +37,7 @@
       card1_h: "مسابح خاصة",
       card1_p: "راحة وخصوصية.",
       card2_h: "مناسب للعائلة",
-      card2_p: "مساحات واسعة ومناطق لعب.",
+      card2_p: "مساحات واسعة وهادئة.",
       card3_h: "سهولة الوصول",
       card3_p: "موقع مميز ومواقف متاحة.",
       footer: "© " + new Date().getFullYear() + " منتجع بانتيرا. جميع الحقوق محفوظة."
